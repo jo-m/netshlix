@@ -18,6 +18,7 @@ static const char *TAG = "example";
 
 #define SMALLTV_PRO_LCD_H_RES 240
 #define SMALLTV_PRO_LCD_V_RES 240
+#define SMALLTV_PRO_LCD_COLOR_FORMAT LV_COLOR_FORMAT_RGB565
 #define SMALLTV_PRO_LCD_COLOR_DEPTH_BIT 16  // RGB565 == LV_COLOR_FORMAT_RGB565
 #define SMALLTV_PRO_LCD_COLOR_DEPTH_BYTE (SMALLTV_PRO_LCD_COLOR_DEPTH_BIT / 8)
 
@@ -50,7 +51,7 @@ static const char *TAG = "example";
 #define SMALLTV_PRO_LCD_HOST SPI2_HOST
 
 // TODO
-#define EXAMPLE_LVGL_TICK_PERIOD_MS 2
+#define SMALLTV_PRO_LVGL_TICK_PERIOD_MS 2
 
 // Since heap since is huge on ESP32, Frame buffer is kept activated by default and no flickering
 // effect…
@@ -58,8 +59,10 @@ static const char *TAG = "example";
 void example_lvgl_demo_ui(lv_display_t *disp) {
     lv_obj_t *scr = lv_display_get_screen_active(disp);
     lv_obj_t *label = lv_label_create(scr);
+
     lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-    lv_label_set_text(label, "Hello Espressif, Hello LVGL.");
+    lv_label_set_text(label, "Hello Espressif, Hello LVGL. This must be a bit longer to scoll.");
+
     lv_obj_set_width(label, 240);
     lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 0);
 }
@@ -83,10 +86,7 @@ static void lcd_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_
     lv_display_flush_ready(disp);
 }
 
-static void lcd_increase_lvgl_tick(void *arg) {
-    /* Tell LVGL how many milliseconds has elapsed */
-    lv_tick_inc(EXAMPLE_LVGL_TICK_PERIOD_MS);
-}
+static void lcd_increase_lvgl_tick(void *arg) { lv_tick_inc(SMALLTV_PRO_LVGL_TICK_PERIOD_MS); }
 
 void app_main(void) {
     ESP_LOGI(TAG, "Turn off LCD backlight");
@@ -131,59 +131,48 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
-    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, true));
+    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, false));
     ESP_ERROR_CHECK(esp_lcd_panel_set_gap(panel_handle, 0, 0));
-    // Swap x and y axis (Different LCD screens may need different options)
-    ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(panel_handle, true));
+    ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(panel_handle, false));
 
     ESP_LOGI(TAG, "Turn on LCD backlight");
     ESP_ERROR_CHECK(gpio_set_level(SMALLTV_PRO_LCD_BL_PIN, SMALLTV_PRO_LCD_BL_ON_LEVEL));
 
-    // Draw some dummy data.
-    uint8_t *buf = heap_caps_malloc(240 * 240 * 2, MALLOC_CAP_DMA);
-    assert(buf);
-    for (int i = 0; i < 240 * 240 * 2; i++) {
-        buf[i] = i % 256;
-    }
-    esp_lcd_panel_draw_bitmap(panel_handle, 0, 0, 240, 240, buf);
+    ESP_LOGI(TAG, "Initialize LVGL library");
+    lv_init();
+    // alloc draw buffers used by LVGL
+    // it's recommended to choose the size of the draw buffer(s) to be at least 1/10 screen sized
+    const size_t buf_sz =
+        SMALLTV_PRO_LCD_H_RES * SMALLTV_PRO_LCD_V_RES * SMALLTV_PRO_LCD_COLOR_DEPTH_BYTE / 10;
+    lv_color_t *buf1 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
+    assert(buf1);
+    lv_color_t *buf2 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
+    assert(buf2);
 
-    // ESP_LOGI(TAG, "Initialize LVGL library");
-    // lv_init();
-    // // alloc draw buffers used by LVGL
-    // // it's recommended to choose the size of the draw buffer(s) to be at least 1/10 screen sized
-    // const size_t buf_sz =
-    //     SMALLTV_PRO_LCD_H_RES * SMALLTV_PRO_LCD_V_RES * SMALLTV_PRO_LCD_COLOR_DEPTH_BYTE / 10;
-    // lv_color_t *buf1 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
-    // assert(buf1);
-    // lv_color_t *buf2 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
-    // assert(buf2);
+    lv_display_t *disp = lv_display_create(SMALLTV_PRO_LCD_H_RES, SMALLTV_PRO_LCD_V_RES);
+    lv_display_set_user_data(disp, (void *)panel_handle);
+    lv_display_set_flush_cb(disp, lcd_flush_cb);
+    lv_display_set_buffers(disp, buf1, buf2, buf_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_color_format(disp, SMALLTV_PRO_LCD_COLOR_FORMAT);
 
-    // lv_display_t *disp = lv_display_create(SMALLTV_PRO_LCD_H_RES, SMALLTV_PRO_LCD_V_RES);
-    // lv_display_set_user_data(disp, (void *)panel_handle);
-    // lv_display_set_flush_cb(disp, lcd_flush_cb);
-    // lv_display_set_buffers(disp, buf1, buf2, buf_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
-    // lv_display_set_color_format(disp, SMALLTV_PRO_LCD_COLOR_DEPTH_BIT);
+    ESP_LOGI(TAG, "Install LVGL tick timer");
+    const esp_timer_create_args_t lvgl_tick_timer_args = {.callback = &lcd_increase_lvgl_tick,
+                                                          .name = "lvgl_tick"};
+    esp_timer_handle_t lvgl_tick_timer = NULL;
+    ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
+    ESP_ERROR_CHECK(
+        esp_timer_start_periodic(lvgl_tick_timer, SMALLTV_PRO_LVGL_TICK_PERIOD_MS * 1000));
 
-    // ESP_LOGI(TAG, "Install LVGL tick timer");
-    // // Tick interface for LVGL (using esp_timer to generate 2ms periodic event)
-    // const esp_timer_create_args_t lvgl_tick_timer_args = {.callback = &lcd_increase_lvgl_tick,
-    //                                                       .name = "lvgl_tick"};
-    // esp_timer_handle_t lvgl_tick_timer = NULL;
-    // ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
-    // ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, EXAMPLE_LVGL_TICK_PERIOD_MS *
-    // 1000));
-
-    // ESP_LOGI(TAG, "Display LVGL animation");
-    // example_lvgl_demo_ui(disp);
+    ESP_LOGI(TAG, "Display LVGL animation");
+    example_lvgl_demo_ui(disp);
 
     while (1) {
-        // ESP_LOGI(TAG, "Hello %d!", 42);
-
         // raise the task priority of LVGL and/or reduce the handler period can improve the
         // performance
-        // vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(10));
+
         // The task running lv_timer_handler should have lower priority than that running
         // `lv_tick_inc`
-        // lv_timer_handler();
+        lv_timer_handler();
     }
 }
