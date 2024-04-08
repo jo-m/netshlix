@@ -1,6 +1,10 @@
 #include <esp_err.h>
 #include <esp_log.h>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 #include <freertos/FreeRTOS.h>
+#pragma GCC diagnostic pop
 #include <freertos/task.h>
 #include <math.h>
 #include <stdio.h>

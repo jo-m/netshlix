@@ -1,8 +1,11 @@
 #include "lcd.h"
 
 #include <driver/gpio.h>
-#include <driver/spi_master.h>
 #include <esp_lcd_panel_io.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#include <driver/spi_master.h>
+#pragma GCC diagnostic pop
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_vendor.h>
 #include <esp_log.h>
