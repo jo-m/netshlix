@@ -7,7 +7,7 @@
 #include "fakesp.h"
 #include "rtp.h"
 
-#define RTP_JPEG_N_FRAMES_BUFFERED 3
+#define RTP_JPEG_N_FRAMES_BUFFERED 5
 #define RTP_JPEG_MAX_PACKETS_PER_FRAME 24
 #define RTP_JPEG_MAX_PAYLOAD_SIZE_BYTES (50 * 1024)
 
@@ -35,21 +35,19 @@ void rtp_jpeg_header_print(const rtp_jpeg_header_t h);
 
 typedef struct rtp_jpeg_frame_t {
     bool in_use;
-    rtp_mono_timestamp_us first_pack_recv_timestamp;
-    uint32_t rtp_timestamp;
-    uint16_t width;
-    uint16_t height;
 
-    uint16_t first_rtp_sequence_number;
-    uint8_t received_packets_bitfield[RTP_JPEG_MAX_PACKETS_PER_FRAME / 8 +
-                                      (RTP_JPEG_MAX_PACKETS_PER_FRAME % 8 != 0)];
+    uint32_t rtp_timestamp;
+    uint16_t rtp_seq_first, rtp_seq_last;
+    uint8_t rtp_seq_mask[RTP_JPEG_MAX_PACKETS_PER_FRAME / 8 +
+                         (RTP_JPEG_MAX_PACKETS_PER_FRAME % 8 != 0)];
+
+    uint16_t width, height;
     uint8_t payload[RTP_JPEG_MAX_PAYLOAD_SIZE_BYTES];
+    ptrdiff_t payload_max_sz;
 } rtp_jpeg_frame_t;
 
 typedef struct rtp_jpeg_session_t {
     uint32_t ssrc;
-
-    rtp_mono_timestamp_us last_recv;
     rtp_jpeg_frame_t frames[RTP_JPEG_N_FRAMES_BUFFERED];
 } rtp_jpeg_session_t;
 
