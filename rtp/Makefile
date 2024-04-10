@@ -1,5 +1,5 @@
-HEADERS = rtp.h rtp_jpeg.h time.h fakesp.h
-OBJECTS = rtp.o rtp_jpeg.o time.o recv.o
+HEADERS = rtp.h rtp_jpeg.h fakesp.h
+OBJECTS = rtp.o rtp_jpeg.o recv.o
 
 default: recv
 

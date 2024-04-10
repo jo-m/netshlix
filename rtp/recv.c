@@ -8,7 +8,6 @@
 #include "fakesp.h"
 #include "rtp.h"
 #include "rtp_jpeg.h"
-#include "time.h"
 
 static const char *TAG = "main";
 
@@ -48,9 +47,8 @@ int main() {
         memset(buf, 0, sizeof(buf));
         const size_t sz =
             recvfrom(sockfd, buf, MAX_BUFFER, 0, (struct sockaddr *)&client_addr, &addr_size);
-        const int64_t now = micros();
-        printf("Received %ld bytes on port %d from %s on %ld\n", sz, client_addr.sin_port,
-               inet_ntoa(client_addr.sin_addr), now);
+        printf("Received %ld bytes on port %d from %s\n", sz, client_addr.sin_port,
+               inet_ntoa(client_addr.sin_addr));
 
         // Parse RTP header.
         rtp_header_t header;
