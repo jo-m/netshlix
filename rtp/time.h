@@ -12,4 +12,4 @@ static_assert(sizeof(long) == sizeof(int64_t), "Well, it's not");
 #define SEC_TO_US(sec) ((sec)*US_PER_SEC)
 #define NS_TO_US(ns) ((ns) / NS_PER_US)
 
-uint64_t micros();
+int64_t micros();
