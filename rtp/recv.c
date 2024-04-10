@@ -37,7 +37,6 @@ int main() {
         return 0;
     }
 
-    uint32_t ssrc = 0;
     rtp_jpeg_session_t sess = {0};
     rtp_jitbuf_t jitbuf = {0};
 
@@ -47,44 +46,41 @@ int main() {
         memset(buf, 0, sizeof(buf));
         const size_t sz =
             recvfrom(sockfd, buf, MAX_BUFFER, 0, (struct sockaddr *)&client_addr, &addr_size);
-        printf("Received %ld bytes on port %d from %s\n", sz, client_addr.sin_port,
-               inet_ntoa(client_addr.sin_addr));
+        ESP_LOGI(TAG, "Received %ld bytes on port %d from %s", sz, client_addr.sin_port,
+                 inet_ntoa(client_addr.sin_addr));
 
         // Parse RTP header.
-        rtp_header_t header;
-        {
-            const esp_err_t success = parse_rtp_header((uint8_t *)buf, sz, &header);
-            if (success != ESP_OK) {
+        uint16_t sequence_number = 0;
+        uint32_t ssrc = 0;
+        if (partial_parse_rtp_header((uint8_t *)buf, sz, &sequence_number, &ssrc) != ESP_OK) {
+            ESP_LOGI(TAG, "Failed to parse RTP header");
+            continue;
+        }
+
+        if (sess.ssrc == 0) {
+            // Try to initialize session.
+            ESP_LOGI(TAG, "Starting session with ssrc=%u", ssrc);
+            init_rtp_jitbuf(ssrc, &jitbuf);
+            init_rtp_jpeg_session(ssrc, &sess);
+        }
+
+        if (rtp_jitbuf_feed(&jitbuf, (uint8_t *)buf, sz) != ESP_OK) {
+            ESP_LOGI(TAG, "Failed to feed RTP packet to jitbuf");
+        }
+
+        // Feed from jitbuf to jpeg session.
+        uint8_t retr_buf[MAX_BUFFER];
+        ptrdiff_t retr_sz = 0;
+        while ((retr_sz = rtp_jitbuf_retrieve(&jitbuf, retr_buf, sizeof(retr_buf))) > 0) {
+            rtp_header_t header;
+            if (parse_rtp_header(retr_buf, retr_sz, &header) != ESP_OK) {
                 ESP_LOGI(TAG, "Failed to parse RTP header");
                 continue;
             }
-        }
 
-        // Try to initialize session.
-        if (ssrc == 0) {
-            ssrc = header.ssrc;
-            ESP_LOGI(TAG, "Starting session with ssrc=%u\n", ssrc);
-            init_rtp_jpeg_session(ssrc, &sess);
-            init_rtp_jitbuf(ssrc, RTP_PT_CLOCKRATE_JPEG, &jitbuf);
-        }
-
-        if (ssrc != 0) {
-            // const esp_err_t success = rtp_jpeg_session_feed(&sess, header);
-            // if (success != ESP_OK) {
-            //     ESP_LOGI(TAG, "Failed to feed RTP packet");
-            //     continue;
-            // }
-
-            const esp_err_t success2 = rtp_jitbuf_feed(&jitbuf, (uint8_t *)buf, sz);
-            if (success2 != ESP_OK) {
-                ESP_LOGI(TAG, "Failed to feed RTP packet");
-                continue;
-            }
-
-            uint8_t rxbuf[MAX_BUFFER];
-            ptrdiff_t retr_sz = 0;
-            while ((retr_sz = rtp_jitbuf_retrieve(&jitbuf, rxbuf, sizeof(rxbuf))) > 0) {
-                ESP_LOGI(TAG, "Got packet");
+            ESP_LOGI(TAG, "Feed to JPEG session");
+            if (rtp_jpeg_session_feed(&sess, header) != ESP_OK) {
+                ESP_LOGI(TAG, "Failed to feed RTP packet to jpeg_session");
             }
         }
     }

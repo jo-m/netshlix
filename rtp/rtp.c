@@ -68,9 +68,9 @@ esp_err_t partial_parse_rtp_header(const uint8_t *buf, const ptrdiff_t sz,
 }
 
 void rtp_header_print(const rtp_header_t h) {
-    ESP_LOGI(TAG, "RTP[v=%hhu e=%hhu c=%hhu mark=%hhu pt=%hhu seq=%hu ts=%u ssrc=%u]", h.version,
-             h.extension, h.csrc_count, h.marker, h.payload_type, h.sequence_number, h.timestamp,
-             h.ssrc);
+    ESP_LOGI(TAG, "RTP[v=%hhu ext=%hhu csrc=%hhu mark=%hhu pt=%hhu seq=%hu ts=%u ssrc=%u]",
+             h.version, h.extension, h.csrc_count, h.marker, h.payload_type, h.sequence_number,
+             h.timestamp, h.ssrc);
 }
 
 void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *out) {

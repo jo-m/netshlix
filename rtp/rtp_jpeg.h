@@ -10,6 +10,7 @@
 #define RTP_JPEG_N_FRAMES_BUFFERED 5
 #define RTP_JPEG_MAX_PACKETS_PER_FRAME 24
 #define RTP_JPEG_MAX_PAYLOAD_SIZE_BYTES (50 * 1024)
+#define RTP_JPEG_QT_SIZE_BYTES 128
 
 // https://datatracker.ietf.org/doc/html/rfc2435#section-3.1
 //
@@ -55,29 +56,23 @@ typedef struct rtp_jpeg_qt_header_t {
     ptrdiff_t payload_sz;
 } rtp_jpeg_qt_header_t;
 
-esp_err_t parse_rtp_jpeg_qt_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_header_t *out);
+esp_err_t parse_rtp_jpeg_qt_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_header_t *out,
+                                   ptrdiff_t *parsed);
 
 void rtp_jpeg_qt_header_print(const rtp_jpeg_qt_header_t h);
 
-typedef struct rtp_jpeg_frame_t {
-    bool in_use;
+typedef struct rtp_jpeg_session_t {  // TODO: rename
+    uint32_t ssrc;
 
-    uint32_t rtp_timestamp;
-    uint16_t rtp_seq_first, rtp_seq_last;
-    uint8_t rtp_seq_mask[RTP_JPEG_MAX_PACKETS_PER_FRAME / 8 +
-                         (RTP_JPEG_MAX_PACKETS_PER_FRAME % 8 != 0)];
-
-    rtp_jpeg_header_t example;
     uint8_t payload[RTP_JPEG_MAX_PAYLOAD_SIZE_BYTES];
     ptrdiff_t payload_sz;
-} rtp_jpeg_frame_t;
 
-typedef struct rtp_jpeg_session_t {
-    uint32_t ssrc;
-    rtp_jpeg_frame_t frames[RTP_JPEG_N_FRAMES_BUFFERED];
+    rtp_jpeg_qt_header_t qt_header;
+    uint8_t qt_data[RTP_JPEG_QT_SIZE_BYTES];
 } rtp_jpeg_session_t;
 
 void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out);
 
 // Feed a packet to an RTP/JPEG session.
+// Packets are expected to be ordered and deduplicated.
 esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_header_t h);
