@@ -1,0 +1,17 @@
+HEADERS = rtp.h rtp_jpeg.h
+OBJECTS = rtp.o rtp_jpeg.o recv.o
+
+default: recv
+
+CFLAGS = -g -Wall -Werror -Wextra -Wpedantic -Wshadow -Wsign-compare -Wunreachable-code
+LDFLAGS =
+
+%.o: %.c $(HEADERS) Makefile
+	gcc $(CFLAGS) -c $< -o $@
+
+recv: $(OBJECTS) Makefile
+	gcc $(OBJECTS) $(LDFLAGS) -o $@
+
+clean:
+	-rm -f $(OBJECTS)
+	-rm -f recv
