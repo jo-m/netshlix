@@ -77,11 +77,14 @@ sudo ip netns exec s2 tc qdisc add dev veth1 root netem delay 100ms 50ms 50% los
 # Reset
 sudo ip netns exec s2 tc qdisc replace dev veth1 root pfifo
 
+# Run gstreamer in network ns
 sudo ip netns exec s2 \
     gst-launch-1.0 filesrc location=BigBuckBunny_320x180.mp4 \
-    ! decodebin ! videoconvert ! video/x-raw,format=I420 \
-    ! x264enc tune=zerolatency bitrate=500 speed-preset=superfast \
-    ! rtph264pay ! udpsink host=192.168.64.1 port=1234
+    ! decodebin \
+    ! jpegenc \
+    ! rtpjpegpay \
+    ! udpsink host=192.168.64.1 port=1234
 
-make && sudo sudo ip netns exec s1 ./recv
+make && sudo ip netns exec s1 ./recv
+sudo ip netns exec s1 wireshark
 ```
