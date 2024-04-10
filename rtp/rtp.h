@@ -61,7 +61,6 @@ typedef enum rtp_pt_clockrate {
 // Packets arriving too late are dropped.
 typedef struct rtp_jitbuf_t {
     uint32_t ssrc;
-    uint32_t clock_rate;
 
     uint16_t max_seq;  // Max seq number we currently have in the buffer.
     int buf_top;       // Wrap-around buf index pointing to the packet with the highest seq number.
@@ -75,7 +74,7 @@ typedef struct rtp_jitbuf_t {
     int32_t max_seq_out;
 } rtp_jitbuf_t;
 
-void init_rtp_jitbuf(const uint32_t ssrc, const uint32_t clock_rate, rtp_jitbuf_t *out);
+void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *out);
 
 esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t sz);
 

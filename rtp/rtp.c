@@ -73,12 +73,11 @@ void rtp_header_print(const rtp_header_t h) {
              h.ssrc);
 }
 
-void init_rtp_jitbuf(const uint32_t ssrc, const uint32_t clock_rate, rtp_jitbuf_t *out) {
+void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *out) {
     assert(out != NULL);
     memset(out, 0, sizeof(rtp_jitbuf_t));
 
     out->ssrc = ssrc;
-    out->clock_rate = clock_rate;
 
     out->buf_top = -1;
     out->max_seq_out = -1;
