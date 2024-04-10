@@ -3,7 +3,7 @@ OBJECTS = rtp.o rtp_jpeg.o time.o recv.o
 
 default: recv
 
-CFLAGS = -g -Wall -Werror -Wextra -Wpedantic -Wshadow -Wsign-compare -Wunreachable-code
+CFLAGS = -g -std=gnu17 -Wall -Werror -Wextra -Wpedantic -Wshadow -Wsign-compare -Wunreachable-code
 LDFLAGS =
 
 %.o: %.c $(HEADERS) Makefile
