@@ -41,6 +41,33 @@ void rtp_jpeg_header_print(const rtp_jpeg_header_t h) {
              h.fragment_offset, h.type, h.q, h.width, h.height);
 }
 
+esp_err_t parse_rtp_jpeg_qt_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_header_t *out) {
+    assert(out != NULL);
+    assert(buf != NULL);
+    memset(out, 0, sizeof(rtp_jpeg_qt_header_t));
+
+    const ptrdiff_t header_sz = 4;
+    if (sz < header_sz) {
+        return ESP_ERR_INVALID_SIZE;
+    }
+
+    out->mbz = buf[0];
+    out->precision = buf[1];
+    out->length = (buf[2] << 8) | buf[3];
+
+    if (header_sz + out->length > sz) {
+        return ESP_ERR_INVALID_SIZE;
+    }
+
+    out->payload = (uint8_t *)&buf[header_sz];
+    out->payload_sz = out->length;
+
+    return ESP_OK;
+}
+
+void rtp_jpeg_qt_header_print(const rtp_jpeg_qt_header_t h) {
+    ESP_LOGI(TAG, "QT[mbz=%hhu prec=%hhu len=%u]", h.mbz, h.precision, h.length);
+}
 
 void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out) {
     assert(out != NULL);
@@ -104,6 +131,17 @@ static esp_err_t frame_write_packet(rtp_jpeg_frame_t *f, const rtp_header_t h,
         f->payload_sz = 0;
     }
 
+    // Quantization table.
+    if (jh.q >= 128 && jh.fragment_offset == 0) {
+        rtp_jpeg_qt_header_t qt = {0};
+        const esp_err_t success = parse_rtp_jpeg_qt_header(jh.payload, jh.payload_sz, &qt);
+        if (success != ESP_OK) {
+            return success;
+        }
+        rtp_jpeg_qt_header_print(qt);
+
+        // TODO: advance payload?
+    }
 
     //  Mark frame as potentially complete on marker bit.
     if (h.marker) {

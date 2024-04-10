@@ -36,6 +36,29 @@ esp_err_t parse_rtp_jpeg_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_heade
 
 void rtp_jpeg_header_print(const rtp_jpeg_header_t h);
 
+// https://datatracker.ietf.org/doc/html/rfc2435#section-3.1.8
+//
+// 0                   1                   2                   3
+// 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |      MBZ      |   Precision   |             Length            |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                    Quantization Table Data                    |
+// |                              ...                              |
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+typedef struct rtp_jpeg_qt_header_t {
+    uint8_t mbz;
+    uint8_t precision;
+    uint16_t length;
+
+    uint8_t *payload;
+    ptrdiff_t payload_sz;
+} rtp_jpeg_qt_header_t;
+
+esp_err_t parse_rtp_jpeg_qt_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_header_t *out);
+
+void rtp_jpeg_qt_header_print(const rtp_jpeg_qt_header_t h);
+
 typedef struct rtp_jpeg_frame_t {
     bool in_use;
 
