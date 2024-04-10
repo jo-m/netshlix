@@ -69,8 +69,8 @@ typedef struct rtp_jitbuf_t {
 
     // Packet buffer. Spaced by sequence number, i.e. neighbors have a seq difference of 1.
     uint8_t buf[RTP_JITBUF_BUF_N_PACKETS][RTP_JITBUF_PACKET_MAX_SIZE];
-    // Keeps track of occupied slots in the buffer, and their length. Uses same indexing as buf.
-    ptrdiff_t buf_lengths[RTP_JITBUF_BUF_N_PACKETS];
+    // Keeps track of occupied slots in the buffer, and their sizes. Uses same indexing as buf.
+    ptrdiff_t buf_szs[RTP_JITBUF_BUF_N_PACKETS];
 
     int32_t max_seq_out;
 } rtp_jitbuf_t;

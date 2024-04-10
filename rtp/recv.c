@@ -82,8 +82,8 @@ int main() {
             }
 
             uint8_t rxbuf[MAX_BUFFER];
-            ptrdiff_t len = 0;
-            while ((len = rtp_jitbuf_retrieve(&jitbuf, rxbuf, sizeof(rxbuf))) > 0) {
+            ptrdiff_t retr_sz = 0;
+            while ((retr_sz = rtp_jitbuf_retrieve(&jitbuf, rxbuf, sizeof(rxbuf))) > 0) {
                 ESP_LOGI(TAG, "Got packet");
             }
         }
