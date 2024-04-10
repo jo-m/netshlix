@@ -5,8 +5,12 @@
 #include <string.h>
 #include <sys/socket.h>
 
+#include "fakesp.h"
 #include "rtp.h"
 #include "rtp_jpeg.h"
+#include "time.h"
+
+static const char *TAG = "main";
 
 #define PORT 1234
 #define MAX_BUFFER 65536
@@ -34,6 +38,9 @@ int main() {
         return 0;
     }
 
+    uint32_t ssrc = 0;
+    rtp_jpeg_session_t sess = {0};
+
     while (1) {
         // Receive packets
         addr_size = sizeof client_addr;
@@ -42,25 +49,21 @@ int main() {
         printf("Received %ld bytes on port %d from %s\n", received, client_addr.sin_port,
                inet_ntoa(client_addr.sin_addr));
 
-        rtp_header_t header;
-        ptrdiff_t parsed = parse_rtp_header((uint8_t *)buffer, received, &header);
-        if (parsed > 0) {
-            printf(
-                "RTP Header: parsed=%ld v=%hhu e=%hhu c=%hhu mark=%hhu pt=%hhu seq=%hu ts=%hu "
-                "ssrc=%u\n",
-                parsed, header.version, header.extension, header.csrc_count, header.marker,
-                header.payload_type, header.sequence_number, header.timestamp, header.ssrc);
+        // Try to initialize session
+        if (ssrc == 0) {
+            rtp_header_t header;
+            ptrdiff_t parsed = parse_rtp_header((uint8_t *)buffer, received, &header);
+            if (parsed > 0) {
+                ssrc = header.ssrc;
+            }
+            create_rtp_jpeg_session(ssrc, &sess);
+
+            ESP_LOGI(TAG, "Starting session with ssrc=%u\n", ssrc);
         }
 
-        rtp_header_jpeg_t header_jpeg;
-        parsed = parse_rtp_jpeg_header((uint8_t *)(buffer + parsed), received, &header_jpeg);
-        if (parsed > 0) {
-            printf("RTP JPEG Header: parsed=%ld tpsp=%hhu fofs=%u tp=%hhu q=%hhu sz=%hux%hu\n",
-                   parsed, header_jpeg.type_specific, header_jpeg.fragment_offset, header_jpeg.type,
-                   header_jpeg.q, header_jpeg.width, header_jpeg.height);
-        }
+        rtp_jpeg_session_feed(&sess, (uint8_t *)buffer, received, micros());
 
-        memset(buffer, 0, sizeof(buffer));  // Clear buffer
+        memset(buffer, 0, sizeof(buffer));
     }
 
     return 0;

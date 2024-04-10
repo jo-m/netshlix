@@ -31,22 +31,18 @@ typedef struct rtp_header_t {
     uint32_t csrc[16];
 } rtp_header_t;
 
-// typedef uint64_t rtp_mono_timestamp_us;
+typedef uint64_t rtp_mono_timestamp_us;
 
-// // https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
-// typedef enum rtp_pt {
-//     RTP_PT_JPEG = 26,
-// } rtp_pt;
+// https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
+typedef enum rtp_pt {
+    RTP_PT_JPEG = 26,
+} rtp_pt;
 
-// // https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
-// typedef enum rtp_pt_clockrate {
-//     RTP_PT_CLOCKRATE_JPEG = 90000,
-// } rtp_pt_clockrate;
+// https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
+typedef enum rtp_pt_clockrate {
+    RTP_PT_CLOCKRATE_JPEG = 90000,
+} rtp_pt_clockrate;
 
-// typedef struct rtp_session_t {
-//     uint8_t pt;
-//     uint32_t ssrc;
-//     rtp_mono_timestamp_us last_recv;
-// } rtp_session_t;
+ptrdiff_t parse_rtp_header(const uint8_t *data, ptrdiff_t length, rtp_header_t *out);
 
-ptrdiff_t parse_rtp_header(uint8_t *data, ptrdiff_t length, rtp_header_t *header);
+void rtp_header_print(const rtp_header_t *h);

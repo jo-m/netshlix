@@ -4,13 +4,21 @@
 #include <assert.h>
 #include <string.h>
 
-ptrdiff_t parse_rtp_header(uint8_t *data, ptrdiff_t length, rtp_header_t *header) {
+#include "fakesp.h"
+
+static const char *TAG = "rtp";
+
+ptrdiff_t parse_rtp_header(const uint8_t *data, ptrdiff_t length, rtp_header_t *header) {
     if (length < 12) {
         return 0;
     }
 
     memset(header, 0, sizeof(rtp_header_t));
     header->version = (data[0] >> 6) & 0x03;
+    if (header->version != 2) {
+        return 0;
+    }
+
     header->padding = (data[0] >> 5) & 0x01;
     header->extension = (data[0] >> 4) & 0x01;
     header->csrc_count = data[0] & 0x0F;
@@ -30,4 +38,10 @@ ptrdiff_t parse_rtp_header(uint8_t *data, ptrdiff_t length, rtp_header_t *header
     }
 
     return 12 + header->csrc_count * 4;
+}
+
+void rtp_header_print(const rtp_header_t *h) {
+    ESP_LOGI(TAG, "RTP[v=%hhu e=%hhu c=%hhu mark=%hhu pt=%hhu seq=%hu ts=%u ssrc=%u]\n", h->version,
+             h->extension, h->csrc_count, h->marker, h->payload_type, h->sequence_number,
+             h->timestamp, h->ssrc);
 }
