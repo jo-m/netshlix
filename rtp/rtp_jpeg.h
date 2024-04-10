@@ -31,7 +31,7 @@ typedef struct rtp_jpeg_header_t {
 
 ptrdiff_t parse_rtp_jpeg_header(const uint8_t *data, ptrdiff_t length, rtp_jpeg_header_t *out);
 
-void rtp_jpeg_header_print(const rtp_jpeg_header_t *h);
+void rtp_jpeg_header_print(const rtp_jpeg_header_t h);
 
 typedef struct rtp_jpeg_frame_t {
     bool in_use;

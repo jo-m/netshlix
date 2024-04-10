@@ -40,8 +40,8 @@ ptrdiff_t parse_rtp_header(const uint8_t *data, ptrdiff_t length, rtp_header_t *
     return 12 + header->csrc_count * 4;
 }
 
-void rtp_header_print(const rtp_header_t *h) {
-    ESP_LOGI(TAG, "RTP[v=%hhu e=%hhu c=%hhu mark=%hhu pt=%hhu seq=%hu ts=%u ssrc=%u]\n", h->version,
-             h->extension, h->csrc_count, h->marker, h->payload_type, h->sequence_number,
-             h->timestamp, h->ssrc);
+void rtp_header_print(const rtp_header_t h) {
+    ESP_LOGI(TAG, "RTP[v=%hhu e=%hhu c=%hhu mark=%hhu pt=%hhu seq=%hu ts=%u ssrc=%u]", h.version,
+             h.extension, h.csrc_count, h.marker, h.payload_type, h.sequence_number, h.timestamp,
+             h.ssrc);
 }

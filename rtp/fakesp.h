@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-#define ESP_LOGI(tag, format, ...) printf("[%s]\t" format, tag, ##__VA_ARGS__)
+#define ESP_LOGI(tag, format, ...) printf("[%s]\t" format "\n", tag, ##__VA_ARGS__)
 
 typedef int esp_err_t;
 

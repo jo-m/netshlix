@@ -45,4 +45,4 @@ typedef enum rtp_pt_clockrate {
 
 ptrdiff_t parse_rtp_header(const uint8_t *data, ptrdiff_t length, rtp_header_t *out);
 
-void rtp_header_print(const rtp_header_t *h);
+void rtp_header_print(const rtp_header_t h);

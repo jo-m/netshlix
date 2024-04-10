@@ -31,9 +31,9 @@ ptrdiff_t parse_rtp_jpeg_header(const uint8_t *data, const ptrdiff_t length,
     return 8;
 }
 
-void rtp_jpeg_header_print(const rtp_jpeg_header_t *h) {
-    ESP_LOGI(TAG, "MJPG[typs=%hhu fof=%u t=%hhu q=%hhu sz=%hux%hu]\n", h->type_specific,
-             h->fragment_offset, h->type, h->q, h->width, h->height);
+void rtp_jpeg_header_print(const rtp_jpeg_header_t h) {
+    ESP_LOGI(TAG, "MJPG[typs=%hhu fof=%u t=%hhu q=%hhu sz=%hux%hu]", h.type_specific,
+             h.fragment_offset, h.type, h.q, h.width, h.height);
 }
 
 esp_err_t create_rtp_jpeg_session(uint32_t ssrc, rtp_jpeg_session_t *out) {
