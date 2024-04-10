@@ -41,3 +41,47 @@ gst-launch-1.0 -v udpsrc port=1234 caps="application/x-rtp,media=(string)video,c
 - Sizes: ptrdiff_t
 - Pass structs by value
 - All objects are responsible themselves to filter packets by SSRC etc.
+
+## Simulate bad network
+
+```bash
+# Create NS
+sudo ip netns add s1
+sudo ip netns add s2
+# Create & attach cable
+sudo ip link add veth0 type veth peer name veth1
+sudo ip link set veth0 netns s1
+sudo ip link set veth1 netns s2
+# Set IPs
+sudo ip -n s1 addr add 192.168.64.1/24 dev veth0
+sudo ip -n s2 addr add 192.168.64.2/24 dev veth1
+# Check
+sudo ip netns exec s1 ip addr
+sudo ip netns exec s2 ip addr
+sudo ip netns exec s1 arp
+sudo ip netns exec s2 arp
+sudo ip netns exec s1 route
+sudo ip netns exec s2 route
+# Bring up
+sudo ip -n s1 link set veth0 up
+sudo ip -n s2 link set veth1 up
+# Test
+sudo ip netns exec s1 ping 192.168.64.2
+sudo ip netns exec s2 ping 192.168.64.1
+# Test netcat
+sudo ip netns exec s1 nc -l 1234
+sudo ip netns exec s2 nc 192.168.64.1 1234
+
+# Simulate bad network (tc always deals with outgoing)
+sudo ip netns exec s2 tc qdisc add dev veth1 root netem delay 100ms 50ms 50% loss 10%
+# Reset
+sudo ip netns exec s2 tc qdisc replace dev veth1 root pfifo
+
+sudo ip netns exec s2 \
+    gst-launch-1.0 filesrc location=BigBuckBunny_320x180.mp4 \
+    ! decodebin ! videoconvert ! video/x-raw,format=I420 \
+    ! x264enc tune=zerolatency bitrate=500 speed-preset=superfast \
+    ! rtph264pay ! udpsink host=192.168.64.1 port=1234
+
+make && sudo sudo ip netns exec s1 ./recv
+```
