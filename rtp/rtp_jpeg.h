@@ -27,9 +27,12 @@ typedef struct rtp_jpeg_header_t {
     uint8_t q;
     uint16_t width;
     uint16_t height;
+
+    uint8_t *payload;
+    ptrdiff_t payload_sz;
 } rtp_jpeg_header_t;
 
-ptrdiff_t parse_rtp_jpeg_header(const uint8_t *data, ptrdiff_t length, rtp_jpeg_header_t *out);
+esp_err_t parse_rtp_jpeg_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_header_t *out);
 
 void rtp_jpeg_header_print(const rtp_jpeg_header_t h);
 
@@ -41,9 +44,9 @@ typedef struct rtp_jpeg_frame_t {
     uint8_t rtp_seq_mask[RTP_JPEG_MAX_PACKETS_PER_FRAME / 8 +
                          (RTP_JPEG_MAX_PACKETS_PER_FRAME % 8 != 0)];
 
-    uint16_t width, height;
+    rtp_jpeg_header_t example;
     uint8_t payload[RTP_JPEG_MAX_PAYLOAD_SIZE_BYTES];
-    ptrdiff_t payload_max_sz;
+    ptrdiff_t payload_sz;
 } rtp_jpeg_frame_t;
 
 typedef struct rtp_jpeg_session_t {
@@ -51,7 +54,7 @@ typedef struct rtp_jpeg_session_t {
     rtp_jpeg_frame_t frames[RTP_JPEG_N_FRAMES_BUFFERED];
 } rtp_jpeg_session_t;
 
-esp_err_t create_rtp_jpeg_session(uint32_t ssrc, rtp_jpeg_session_t *out);
+void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out);
 
-esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const uint8_t *pack, const ptrdiff_t sz,
-                                const rtp_mono_timestamp_us ts);
+// Feed a packet to an RTP/JPEG session.
+esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_header_t h);

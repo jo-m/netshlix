@@ -18,16 +18,16 @@ static const char *TAG = "main";
 int main() {
     int sockfd;
     struct sockaddr_in server_addr, client_addr;
-    char buffer[MAX_BUFFER];
+    char buf[MAX_BUFFER];
     socklen_t addr_size;
 
-    // Create socket
+    // Create socket.
     if ((sockfd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("cannot create socket");
         return 0;
     }
 
-    // Bind to port
+    // Bind to port.
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(PORT);
@@ -42,7 +42,7 @@ int main() {
     rtp_jpeg_session_t sess = {0};
 
     while (1) {
-        // Receive packets
+        // Receive packet.
         addr_size = sizeof client_addr;
         const size_t received =
             recvfrom(sockfd, buffer, MAX_BUFFER, 0, (struct sockaddr *)&client_addr, &addr_size);
