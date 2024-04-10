@@ -40,30 +40,55 @@ int main() {
 
     uint32_t ssrc = 0;
     rtp_jpeg_session_t sess = {0};
+    rtp_jitbuf_t jitbuf = {0};
 
     while (1) {
         // Receive packet.
         addr_size = sizeof client_addr;
-        const size_t received =
-            recvfrom(sockfd, buffer, MAX_BUFFER, 0, (struct sockaddr *)&client_addr, &addr_size);
-        printf("Received %ld bytes on port %d from %s\n", received, client_addr.sin_port,
-               inet_ntoa(client_addr.sin_addr));
+        memset(buf, 0, sizeof(buf));
+        const size_t sz =
+            recvfrom(sockfd, buf, MAX_BUFFER, 0, (struct sockaddr *)&client_addr, &addr_size);
+        const int64_t now = micros();
+        printf("Received %ld bytes on port %d from %s on %ld\n", sz, client_addr.sin_port,
+               inet_ntoa(client_addr.sin_addr), now);
 
-        // Try to initialize session
-        if (ssrc == 0) {
-            rtp_header_t header;
-            ptrdiff_t parsed = parse_rtp_header((uint8_t *)buffer, received, &header);
-            if (parsed > 0) {
-                ssrc = header.ssrc;
+        // Parse RTP header.
+        rtp_header_t header;
+        {
+            const esp_err_t success = parse_rtp_header((uint8_t *)buf, sz, &header);
+            if (success != ESP_OK) {
+                ESP_LOGI(TAG, "Failed to parse RTP header");
+                continue;
             }
-            create_rtp_jpeg_session(ssrc, &sess);
-
-            ESP_LOGI(TAG, "Starting session with ssrc=%u\n", ssrc);
         }
 
-        rtp_jpeg_session_feed(&sess, (uint8_t *)buffer, received, micros());
+        // Try to initialize session.
+        if (ssrc == 0) {
+            ssrc = header.ssrc;
+            ESP_LOGI(TAG, "Starting session with ssrc=%u\n", ssrc);
+            init_rtp_jpeg_session(ssrc, &sess);
+            init_rtp_jitbuf(ssrc, RTP_PT_CLOCKRATE_JPEG, &jitbuf);
+        }
 
-        memset(buffer, 0, sizeof(buffer));
+        if (ssrc != 0) {
+            // const esp_err_t success = rtp_jpeg_session_feed(&sess, header);
+            // if (success != ESP_OK) {
+            //     ESP_LOGI(TAG, "Failed to feed RTP packet");
+            //     continue;
+            // }
+
+            const esp_err_t success2 = rtp_jitbuf_feed(&jitbuf, (uint8_t *)buf, sz);
+            if (success2 != ESP_OK) {
+                ESP_LOGI(TAG, "Failed to feed RTP packet");
+                continue;
+            }
+
+            uint8_t rxbuf[MAX_BUFFER];
+            ptrdiff_t len = 0;
+            while ((len = rtp_jitbuf_retrieve(&jitbuf, rxbuf, sizeof(rxbuf))) > 0) {
+                ESP_LOGI(TAG, "Got packet");
+            }
+        }
     }
 
     return 0;
