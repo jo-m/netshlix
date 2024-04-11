@@ -79,6 +79,17 @@ void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out) {
     out->ssrc = ssrc;
 }
 
+static esp_err_t rtp_jpeg_handle_frame(rtp_jpeg_session_t *s) {
+    if (s->payload_sz < 2) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    // TODO: emit frame
+    ESP_LOGI(TAG, "=== EMIT FRAME ===");
+
+    return ESP_OK;
+}
+
 esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_header_t h) {
     rtp_header_print(h);
 
@@ -100,6 +111,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_header_t h) {
         return err;
     }
 
+    // TODO: eventually support jh.q < 128.
     if (!(jh.type == 1 && jh.type_specific == 0 && jh.q >= 128)) {
         // We cannot handle that.
         ESP_LOGI(TAG, "Not supported");
@@ -112,36 +124,51 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_header_t h) {
         // New frame, reset.
         init_rtp_jpeg_session(s->ssrc, s);
 
-        if (jh.q >= 128) {
-            rtp_jpeg_qt_header_t qt = {0};
-            ptrdiff_t qt_sz = 0;
-            const esp_err_t err2 = parse_rtp_jpeg_qt_header(jh.payload, jh.payload_sz, &qt, &qt_sz);
-            if (err2 != ESP_OK) {
-                return err2;
-            }
-            rtp_jpeg_qt_header_print(qt);
-
-            // Copy quantization table.
-            assert(qt.length == sizeof(s->qt_data));
-            memcpy(s->qt_data, qt.payload, qt.length);
-            s->qt_header = qt;
-            s->qt_header.payload = s->qt_data;
-
-            // Copy fragments.
-            const ptrdiff_t payload_sz = jh.payload_sz - qt_sz;
-            assert(payload_sz >= 0);
-            memcpy(s->payload, jh.payload + qt_sz, payload_sz);
-            s->payload_sz = payload_sz;
-
-            ESP_LOGI(TAG, "qt_sz=%ld s->payload_sz=%ld", qt_sz, s->payload_sz);
-        } else {
-            assert(false);  // TODO: support?
+        // Parse quantization table.
+        rtp_jpeg_qt_header_t qt = {0};
+        ptrdiff_t qt_parsed_sz = 0;
+        const esp_err_t err2 =
+            parse_rtp_jpeg_qt_header(jh.payload, jh.payload_sz, &qt, &qt_parsed_sz);
+        if (err2 != ESP_OK) {
+            return err2;
         }
+        rtp_jpeg_qt_header_print(qt);
+
+        // Copy quantization table.
+        assert(qt.length == sizeof(s->qt_data));
+        memcpy(s->qt_data, qt.payload, qt.length);
+        s->qt_header = qt;
+        s->qt_header.payload = s->qt_data;
+
+        // Copy fragment.
+        const ptrdiff_t payload_sz = jh.payload_sz - qt_parsed_sz;
+        assert(payload_sz >= 0);
+        memcpy(s->payload, jh.payload + qt_parsed_sz, payload_sz);
+        s->payload_sz = payload_sz;
+
+        ESP_LOGI(TAG, "Added QT jh.payload_sz=%ld qt_parsed_sz=%ld s->payload_sz=%ld",
+                 jh.payload_sz, qt_parsed_sz, s->payload_sz);
+    } else {
+        if (jh.fragment_offset != s->payload_sz) {
+            s->payload_sz = 0;
+            return ESP_ERR_INVALID_STATE;
+        }
+
+        if (jh.payload_sz + s->payload_sz > (ptrdiff_t)sizeof(s->payload)) {
+            s->payload_sz = 0;
+            return ESP_ERR_NO_MEM;
+        }
+
+        memcpy(&s->payload[s->payload_sz], jh.payload, jh.payload_sz);
+        s->payload_sz += jh.payload_sz;
     }
 
-    // TODO: implement
-    assert(false);
+    if (h.marker == 0) {
+        return ESP_OK;
+    }
 
-    // TODO: reset when emitting frame
-    return ESP_ERR_INVALID_VERSION;
+    const esp_err_t success = rtp_jpeg_handle_frame(s);
+    s->payload_sz = 0;
+
+    return success;
 }
