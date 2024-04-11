@@ -89,3 +89,9 @@ sudo ip netns exec s2 \
 make && sudo ip netns exec s1 ./recv
 sudo ip netns exec s1 wireshark
 ```
+
+https://github.com/corkami/formats/blob/master/image/jpeg.md
+https://components.espressif.com/components/espressif/esp_jpeg
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/api-reference/peripherals/jpeg.html
+CONFIG_JPEG_ENABLE_DEBUG_LOG
+https://github.com/espressif/esp-idf/blob/master/examples/peripherals/spi_master/lcd/main/decode_image.c#L45
