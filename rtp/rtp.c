@@ -145,7 +145,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
         return ESP_OK;
     }
 
-    if (advance < -RTP_JITBUF_BUF_N_PACKETS) {
+    if (advance <= -RTP_JITBUF_BUF_N_PACKETS) {
         // Too old, drop.
         ESP_LOGI(TAG, "->jitbuf dropping incoming packet which is too late seq=%hu diff=%d",
                  sequence_number, advance);
