@@ -1,6 +1,7 @@
 #include "rfc2435.h"
 
 #include <stdint.h>
+#include <string.h>
 
 #define u_char uint8_t
 #define u_short uint16_t
@@ -25,7 +26,7 @@ static const int jpeg_chroma_quantizer[64] = {
 /*
  * Call MakeTables with the Q factor and two u_char[64] return arrays
  */
-void MakeTables(int q, u_char *lqt, u_char *cqt) {
+static void MakeTables(int q, u_char *lqt, u_char *cqt) {
     int i;
     int factor = q;
 
@@ -106,7 +107,7 @@ u_char chm_ac_symbols[] = {
     0xe8, 0xe9, 0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa,
 };
 
-u_char *MakeQuantHeader(u_char *p, u_char *qt, int tableNo) {
+static u_char *MakeQuantHeader(u_char *p, u_char *qt, int tableNo) {
     *p++ = 0xff;
     *p++ = 0xdb; /* DQT */
     *p++ = 0;    /* length msb */
@@ -116,8 +117,8 @@ u_char *MakeQuantHeader(u_char *p, u_char *qt, int tableNo) {
     return (p + 64);
 }
 
-u_char *MakeHuffmanHeader(u_char *p, u_char *codelens, int ncodes, u_char *symbols, int nsymbols,
-                          int tableNo, int tableClass) {
+static u_char *MakeHuffmanHeader(u_char *p, u_char *codelens, int ncodes, u_char *symbols,
+                                 int nsymbols, int tableNo, int tableClass) {
     *p++ = 0xff;
 
     *p++ = 0xc4;                  /* DHT */
@@ -131,7 +132,7 @@ u_char *MakeHuffmanHeader(u_char *p, u_char *codelens, int ncodes, u_char *symbo
     return (p);
 }
 
-u_char *MakeDRIHeader(u_char *p, u_short dri) {
+static u_char *MakeDRIHeader(u_char *p, u_short dri) {
     *p++ = 0xff;
     *p++ = 0xdd;       /* DRI */
     *p++ = 0x0;        /* length msb */
@@ -159,7 +160,7 @@ u_char *MakeDRIHeader(u_char *p, u_short dri) {
  *    interchange format (except for possible trailing garbage and
  *    absence of an EOI marker to terminate the scan).
  */
-int MakeHeaders(u_char *p, int type, int w, int h, u_char *lqt, u_char *cqt, u_short dri) {
+static int MakeHeaders(u_char *p, int type, int w, int h, u_char *lqt, u_char *cqt, u_short dri) {
     u_char *start = p;
 
     /* convert from blocks to pixels */
@@ -219,4 +220,11 @@ int MakeHeaders(u_char *p, int type, int w, int h, u_char *lqt, u_char *cqt, u_s
     *p++ = 0;    /* sucessive approx. */
 
     return (p - start);
-};
+}
+
+void rfc2435_make_tables(int q, uint8_t *lqt, uint8_t *cqt) { MakeTables(q, lqt, cqt); }
+
+int rfc2435_make_headers(uint8_t *p, int type, int w, int h, uint8_t *lqt, uint8_t *cqt,
+                         uint16_t dri) {
+    return MakeHeaders(p, type, w, h, lqt, cqt, dri);
+}
