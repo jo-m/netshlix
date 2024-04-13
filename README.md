@@ -4,6 +4,8 @@ idf.py build
 
 # Configure
 idf.py menuconfig
+idf.py save-defconfig
+python -m kconfcheck ...
 
 # Build, flash and monitor the project.
 idf.py -p PORT flash monitor
