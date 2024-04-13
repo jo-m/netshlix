@@ -85,8 +85,6 @@ void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j) {
 
 static int mod(int a, int b) { return (a % b + b) % b; }
 
-// TODO: Add seq num wrap-around handling.
-// TODO: Add ts wrap-around handling.
 esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t sz) {
     uint16_t sequence_number = 0;
     uint32_t ssrc = 0;

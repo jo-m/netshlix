@@ -74,14 +74,34 @@ void rtp_jpeg_qt_print(const rtp_jpeg_qt_t h);
 #define RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES (50 * 1024)
 #define RTP_JPEG_QT_DATA_SIZE_BYTES 128
 
+// A fully assembled RTP/JPEG frame.
+typedef struct rtp_jpeg_frame_t {
+    int width, height;   // Image size.
+    uint32_t timestamp;  // RTP timestamp of the frame.
+
+    // The image data is separated into header and payload.
+    // To pass the image to a parser, concatenate header and payload.
+    uint8_t const *jfif_header;
+    ptrdiff_t jfif_header_sz;
+    uint8_t const *payload;
+    ptrdiff_t payload_sz;
+} rtp_jpeg_frame_t;
+
+// Will be called from rtp_jpeg_session_feed() when a complete JPEG frame has been received and
+// assembled, at most once per invocation. The buffers remain owned by the session and are valid
+// only during the invocation of the callback.
+typedef void (*rtp_jpeg_frame_cb)(const rtp_jpeg_frame_t frame, void *userdata);
+
 // A RTP/JPEG session de-payloads and assembles JPEG frames from RTP packets.
 // Use init_rtp_jpeg_session() to initialize an instance before usage.
+// All struct members are private to the implementation.
 typedef struct rtp_jpeg_session_t {
     uint32_t ssrc;
 
-    // Example header of the current frame being assembled.
+    // RTP/JPEG header of the current frame being assembled.
     // Its payload will be set to NULL, we only care about the metadata.
     rtp_jpeg_packet_t header;
+    uint32_t rtp_timestamp;  // RTP timestamp of the frame.
 
     // JPEG fragments payload.
     uint8_t fragments[RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES];
@@ -90,10 +110,15 @@ typedef struct rtp_jpeg_session_t {
     // Quantization table header, payload will point to qt_data.
     rtp_jpeg_qt_t qt_header;
     uint8_t qt_data[RTP_JPEG_QT_DATA_SIZE_BYTES];
+
+    rtp_jpeg_frame_cb frame_cb;
+    void *userdata;
 } rtp_jpeg_session_t;
 
-// Initialize a session with a given SSRC.
-void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *s);
+// Initialize a session with a given SSRC and callback.
+// Userdata will be passed to the callback as last argument and may be NULL.
+void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_frame_cb frame_cb, void *userdata,
+                           rtp_jpeg_session_t *s);
 
 // Feed a RTP packet to an RTP/JPEG session.
 // Packets are expected to be ordered and deduplicated (use jitbuf for this).

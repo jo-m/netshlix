@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <assert.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,23 @@ static const char *TAG = "main";
 
 #define PORT 1234
 #define MAX_BUFFER 65536
+
+void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata __attribute__((unused))) {
+    ESP_LOGI(TAG, "========== FRAME %dx%d %u ==========", frame.width, frame.height,
+             frame.timestamp);
+
+    static int fcount = 0;
+    char fname[128] = {0};
+    snprintf(fname, sizeof(fname), "frames/frame_%010d.jpeg", fcount++);
+
+    FILE *f = fopen(fname, "w");
+    assert(f != NULL);
+    ptrdiff_t written = fwrite(frame.jfif_header, 1, frame.jfif_header_sz, f);
+    assert(written == frame.jfif_header_sz);
+    written = fwrite(frame.payload, 1, frame.payload_sz, f);
+    assert(written == frame.payload_sz);
+    fclose(f);
+}
 
 int main() {
     int sockfd;
@@ -61,7 +79,7 @@ int main() {
             // Try to initialize session.
             ESP_LOGI(TAG, "Starting session with ssrc=%u", ssrc);
             init_rtp_jitbuf(ssrc, &jitbuf);
-            init_rtp_jpeg_session(ssrc, &sess);
+            init_rtp_jpeg_session(ssrc, jpeg_frame_cb, NULL, &sess);
         }
 
         if (rtp_jitbuf_feed(&jitbuf, (uint8_t *)buf, sz) != ESP_OK) {

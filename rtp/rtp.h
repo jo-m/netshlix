@@ -70,6 +70,7 @@ typedef enum rtp_pt_clockrate {
 // Will wait for missing packets until the buffer is full.
 // Packets arriving too late are dropped.
 // Use init_rtp_jitbuf() to initialize an instance before usage.
+// All struct members are private to the implementation.
 typedef struct rtp_jitbuf_t {
     uint32_t ssrc;
 

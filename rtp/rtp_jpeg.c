@@ -81,10 +81,14 @@ void rtp_jpeg_qt_print(const rtp_jpeg_qt_t p) {
     ESP_LOGI(TAG, "QT[mbz=%hhu prec=%hhu len=%u]", p.mbz, p.precision, p.length);
 }
 
-void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *s) {
+void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_frame_cb frame_cb, void *userdata,
+                           rtp_jpeg_session_t *s) {
+    assert(frame_cb != NULL);
     assert(s != NULL);
     memset(s, 0, sizeof(*s));
     s->ssrc = ssrc;
+    s->frame_cb = frame_cb;
+    s->userdata = userdata;
 }
 
 static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
@@ -103,12 +107,21 @@ static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
     const ptrdiff_t jfif_header_sz =
         rfc2435_make_headers(&jfif_header[0], s->header.type, s->header.width >> 3,
                              s->header.height >> 3, &s->qt_data[0], &s->qt_data[lqt_sz], 0);
-    if (jfif_header_sz > (ptrdiff_t)sizeof(jfif_header)) {
-        // This should never happen.
-        assert(false);
-    }
+    // This should never happen as output size of rfc2435_make_headers() is bounded.
+    assert(jfif_header_sz <= (ptrdiff_t)sizeof(jfif_header));
 
-    // TODO: emit frame
+    // Emit frame callback.
+    rtp_jpeg_frame_t frame = {0};
+    frame.width = s->header.width;
+    frame.height = s->header.height;
+    frame.timestamp = s->rtp_timestamp;
+    frame.jfif_header = jfif_header;
+    frame.jfif_header_sz = jfif_header_sz;
+    frame.payload = s->fragments;
+    frame.payload_sz = s->fragments_sz;
+
+    assert(s->frame_cb != NULL);
+    s->frame_cb(frame, s->userdata);
 
     return ESP_OK;
 }
@@ -142,12 +155,13 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
 
     if (jp.fragment_offset == 0) {
         // New frame, reset.
-        init_rtp_jpeg_session(s->ssrc, s);
+        init_rtp_jpeg_session(s->ssrc, s->frame_cb, s->userdata, s);
 
         // Copy header.
         s->header = jp;
         s->header.payload = NULL;
         s->header.payload_sz = 0;
+        s->rtp_timestamp = p.timestamp;
 
         // Parse quantization table.
         rtp_jpeg_qt_t qt = {0};
