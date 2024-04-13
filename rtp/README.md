@@ -73,10 +73,20 @@ sudo ip netns exec s2 \
 mkdir -p frames
 make && sudo ip netns exec s1 ./linux_main
 
-# With valgrind.
+# With valgrind (sudo apt-get install valgrind).
 make && sudo ip netns exec s1 valgrind --leak-check=yes ./linux_main
 
-make linux_main_san && sudo ip netns exec s1 ./linux_main_san
+# With clang sanitizers (see Makefile).
+make clean linux_main_san && sudo ip netns exec s1 ./linux_main_san
+
+# Fuzz (sudo apt-get install afl++ libpcap-dev).
+make clean linux_fuzztarget_pcap
+# Test the target
+./linux_fuzztarget_pcap seeds/rtp.pcapng
+# FUZZ!!
+echo core >/proc/sys/kernel/core_pattern
+export AFL_SKIP_CPUFREQ=1
+afl-fuzz -i seeds/ -o fuzz_out/ -- ./linux_fuzztarget_pcap  '@@'
 
 # Run Wireshark.
 sudo ip netns exec s1 wireshark

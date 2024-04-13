@@ -6,7 +6,11 @@
  * Minimal dummy header to run code using some ESP-IDF features on Linux.
  */
 
+// #define ESP_LOGE(tag, format, ...)
+// #define ESP_LOGW(tag, format, ...)
+// #define ESP_LOGI(tag, format, ...)
 // #define ESP_LOGD(tag, format, ...)
+// #define ESP_LOGV(tag, format, ...)
 #define ESP_LOGE(tag, format, ...) printf("E[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #define ESP_LOGW(tag, format, ...) printf("W[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #define ESP_LOGI(tag, format, ...) printf("I[%s]\t" format "\n", tag, ##__VA_ARGS__)

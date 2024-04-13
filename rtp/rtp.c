@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <string.h>
 
-static const char *TAG = "rtp";
+__attribute__((unused)) static const char *TAG = "rtp";
 static const ptrdiff_t HEADER_MIN_SZ = 12;
 
 esp_err_t parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz, rtp_packet_t *out) {
@@ -67,7 +67,7 @@ esp_err_t partial_parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz,
     return ESP_OK;
 }
 
-void rtp_packet_print(const rtp_packet_t p) {
+void rtp_packet_print(const rtp_packet_t p __attribute__((unused))) {
     ESP_LOGI(TAG, "RTP[v=%hhu ext=%hhu csrc=%hhu mark=%hhu pt=%hhu seq=%hu ts=%u ssrc=%u]",
              p.version, p.extension, p.csrc_count, p.marker, p.payload_type, p.sequence_number,
              p.timestamp, p.ssrc);

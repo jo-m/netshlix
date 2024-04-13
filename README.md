@@ -27,6 +27,5 @@ idf.py -p PORT flash monitor
 - [ ] SPIFFS
 - [ ] Flash encryption
 - [ ] OTA updates
-- [ ] Add fuzzing to RTP lib
 - [ ] Add menuconfig for some defs
 - [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange

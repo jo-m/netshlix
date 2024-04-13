@@ -1,4 +1,6 @@
 *.o
 /linux_main
 /linux_main_san
+/linux_fuzztarget_pcap
 *.mp4
+*.pcapng

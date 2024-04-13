@@ -7,7 +7,7 @@
 #include "fakesp.h"
 #include "rfc2435.h"
 
-static const char *TAG = "mjpg";
+__attribute__((unused)) static const char *TAG = "mjpg";
 
 esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packet_t *out) {
     if (out == NULL || buf == NULL) {
@@ -41,7 +41,7 @@ esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packe
     return ESP_OK;
 }
 
-void rtp_jpeg_packet_print(const rtp_jpeg_packet_t p) {
+void rtp_jpeg_packet_print(const rtp_jpeg_packet_t p __attribute__((unused))) {
     ESP_LOGI(TAG, "RTP/JPEG[typs=%hhu fof=%u t=%hhu q=%hhu sz=%hux%hu]", p.type_specific,
              p.fragment_offset, p.type, p.q, p.width, p.height);
 }
@@ -77,7 +77,7 @@ esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out
     return ESP_OK;
 }
 
-void rtp_jpeg_qt_print(const rtp_jpeg_qt_t p) {
+void rtp_jpeg_qt_print(const rtp_jpeg_qt_t p __attribute__((unused))) {
     ESP_LOGI(TAG, "QT[mbz=%hhu prec=%hhu len=%u]", p.mbz, p.precision, p.length);
 }
 
