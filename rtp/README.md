@@ -35,6 +35,7 @@ gst-launch-1.0 -v udpsrc port=1234 caps="application/x-rtp,media=(string)video,c
 - [ ] Maybe rename header_ to packet_
 - [ ] Change RTP/JPEG decoder to only keep one frame, reordering is done by buffer now
 - [ ] Decode JPEG: https://github.com/bluenviron/gortsplib/blob/main/pkg/format/rtpmjpeg/decoder.go#L119
+- [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange
 
 ## Conventions
 
