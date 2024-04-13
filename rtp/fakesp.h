@@ -2,6 +2,10 @@
 
 #include <stdio.h>
 
+/**
+ * Minimal dummy header to run code using some ESP-IDF features on Linux.
+ */
+
 // #define ESP_LOGD(tag, format, ...)
 #define ESP_LOGE(tag, format, ...) printf("E[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #define ESP_LOGW(tag, format, ...) printf("W[%s]\t" format "\n", tag, ##__VA_ARGS__)

@@ -1,7 +1,7 @@
 HEADERS = rtp.h rtp_jpeg.h rfc2435.h fakesp.h
-OBJECTS = rtp.o rtp_jpeg.o rfc2435.o recv.o backtrace.o
+OBJECTS = rtp.o rtp_jpeg.o rfc2435.o linux_main.o
 
-default: recv
+default: linux_main
 
 CFLAGS = -g -std=gnu17 -Wall -Werror -Wextra -Wpedantic -Wshadow -Wsign-compare -Wunreachable-code
 LDFLAGS =
@@ -9,9 +9,9 @@ LDFLAGS =
 %.o: %.c $(HEADERS) Makefile
 	gcc $(CFLAGS) -c $< -o $@
 
-recv: $(OBJECTS) Makefile
+linux_main: $(OBJECTS) Makefile
 	gcc $(OBJECTS) $(LDFLAGS) -o $@
 
 clean:
 	-rm -f $(OBJECTS)
-	-rm -f recv
+	-rm -f linux_main

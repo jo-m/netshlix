@@ -9,6 +9,12 @@ idf.py menuconfig
 idf.py -p PORT flash monitor
 ```
 
+## Conventions
+
+- Names: buf, sz, out
+- Sizes: ptrdiff_t
+- Pass structs by value
+
 ## Ideas, TODOs
 
 - [ ] Replace ESP_ERROR_CHECK with real error handling
@@ -21,3 +27,6 @@ idf.py -p PORT flash monitor
 - [ ] SPIFFS
 - [ ] Flash encryption
 - [ ] OTA updates
+- [ ] Add fuzzing to RTP lib
+- [ ] Add menuconfig for some defs
+- [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange
