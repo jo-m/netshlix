@@ -1,7 +1,8 @@
 #include "rtp.h"
 
-#include <arpa/inet.h>
 #include <assert.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 #ifndef NDEBUG
 #include <stdio.h>
@@ -71,7 +72,9 @@ esp_err_t partial_parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz,
 }
 
 void rtp_packet_print(const rtp_packet_t p __attribute__((unused))) {
-    ESP_LOGI(TAG, "RTP[v=%hhu ext=%hhu csrc=%hhu mark=%hhu pt=%hhu seq=%hu ts=%u ssrc=%u]",
+    ESP_LOGI(TAG,
+             "RTP[v=%" PRIu8 " ext=%" PRIu8 " csrc=%" PRIu8 " mark=%" PRIu8 " pt=%" PRIu8
+             " seq=%" PRIu16 " ts=%" PRIu32 " ssrc=%" PRIu32 "]",
              p.version, p.extension, p.csrc_count, p.marker, p.payload_type, p.sequence_number,
              p.timestamp, p.ssrc);
 }
@@ -162,7 +165,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
 
     // Figure out where to place the new packet relative to the current newest one.
     const int32_t advance = seqnum_compare(j->max_seq, sequence_number);
-    ESP_LOGD(TAG, "->jitbuf advance %d", advance);
+    ESP_LOGD(TAG, "->jitbuf advance %" PRId32, advance);
 
     if (advance == 0) {
         // Duplicate, drop.
@@ -196,18 +199,20 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
 
     if (advance <= -RTP_JITBUF_BUF_N_PACKETS) {
         // Too old, drop.
-        ESP_LOGD(TAG, "->jitbuf dropping incoming packet which is too late seq=%hu diff=%d",
+        ESP_LOGD(TAG,
+                 "->jitbuf dropping incoming packet which is too late seq=%" PRIu16
+                 " diff=%" PRId32,
                  sequence_number, advance);
         return ESP_OK;
     }
 
     // Place the packet somewhere in the middle.
     const int pos = mod(j->buf_top + advance, RTP_JITBUF_BUF_N_PACKETS);
-    ESP_LOGD(TAG, "->jitbuf older packet seq=%hu diff=%d placing at %d", sequence_number, advance,
-             pos);
+    ESP_LOGD(TAG, "->jitbuf older packet seq=%" PRIu16 " diff=%" PRId32 " placing at %d",
+             sequence_number, advance, pos);
     if (j->buf_szs[pos] != 0) {
-        ESP_LOGD(TAG, "->jitbuf dropping older duplicate packet seq=%hu diff=%d", sequence_number,
-                 advance);
+        ESP_LOGD(TAG, "->jitbuf dropping older duplicate packet seq=%" PRIu16 " diff=%" PRId32,
+                 sequence_number, advance);
         return ESP_OK;
     }
     assert(sz <= RTP_JITBUF_PACKET_MAX_SIZE);
@@ -239,7 +244,7 @@ static int rtp_jitbuf_find_oldest_packet(rtp_jitbuf_t *j) {
 static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
                                             const uint16_t sequence_number, uint8_t *buf,
                                             const ptrdiff_t sz) {
-    ESP_LOGV(TAG, "jitbuf-> hand out buffer %d len=%ld", pos, j->buf_szs[pos]);
+    ESP_LOGV(TAG, "jitbuf-> hand out buffer %d len=%ld", pos, (long)j->buf_szs[pos]);
     j->max_seq_out = sequence_number;
 
     // Copy out.
@@ -272,8 +277,8 @@ static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
 }
 
 ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz) {
-    ESP_LOGD(TAG, "jitbuf-> state max_seq=%hu buf_top=%d max_seq_out=%d", j->max_seq, j->buf_top,
-             j->max_seq_out);
+    ESP_LOGD(TAG, "jitbuf-> state max_seq=%" PRIu16 " buf_top=%d max_seq_out=%" PRId32, j->max_seq,
+             j->buf_top, j->max_seq_out);
     rtp_jitbuf_print(j);
 
     const int pos = rtp_jitbuf_find_oldest_packet(j);

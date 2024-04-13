@@ -1,5 +1,10 @@
 #pragma once
 
+#ifdef ESP_PLATFORM
+#include <esp_err.h>
+#include <esp_log.h>
+#else
+
 #include <stdio.h>
 
 /**
@@ -39,3 +44,5 @@ typedef int esp_err_t;
 #define ESP_ERR_INVALID_MAC 0x10B      /*!< MAC address was invalid */
 #define ESP_ERR_NOT_FINISHED 0x10C     /*!< Operation has not fully completed */
 #define ESP_ERR_NOT_ALLOWED 0x10D      /*!< Operation is not allowed */
+
+#endif

@@ -1,7 +1,7 @@
 #include "rtp_jpeg.h"
 
-#include <arpa/inet.h>
 #include <assert.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "fakesp.h"
@@ -42,8 +42,10 @@ esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packe
 }
 
 void rtp_jpeg_packet_print(const rtp_jpeg_packet_t p __attribute__((unused))) {
-    ESP_LOGI(TAG, "RTP/JPEG[typs=%hhu fof=%u t=%hhu q=%hhu sz=%hux%hu]", p.type_specific,
-             p.fragment_offset, p.type, p.q, p.width, p.height);
+    ESP_LOGI(TAG,
+             "RTP/JPEG[typs=%" PRIu8 " fof=%" PRIu32 " t=%" PRIu8 " q=%" PRIu8 " sz=%" PRIu16
+             "x%" PRIu16 "]",
+             p.type_specific, p.fragment_offset, p.type, p.q, p.width, p.height);
 }
 
 esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out,
@@ -188,7 +190,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         s->fragments_sz = payload_sz;
 
         ESP_LOGD(TAG, "Added QT jp.payload_sz=%ld qt_parsed_sz=%ld s->payload_sz=%ld",
-                 jp.payload_sz, qt_parsed_sz, s->fragments_sz);
+                 (long)jp.payload_sz, (long)qt_parsed_sz, (long)s->fragments_sz);
     } else {
         if (jp.type_specific != s->header.type_specific || jp.type != s->header.type ||
             // Does it match the first packet?
@@ -197,7 +199,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
             return ESP_ERR_INVALID_STATE;
         }
 
-        if (jp.fragment_offset != s->fragments_sz) {
+        if ((int64_t)jp.fragment_offset != s->fragments_sz) {
             s->fragments_sz = 0;
             return ESP_ERR_INVALID_STATE;
         }
