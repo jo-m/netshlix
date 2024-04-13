@@ -20,7 +20,7 @@
 // |            contributing source (CSRC) identifiers             |
 // |                             ....                              |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-typedef struct rtp_header_t {
+typedef struct rtp_packet_t {
     uint8_t version;
     uint8_t padding;
     uint8_t extension;
@@ -34,14 +34,14 @@ typedef struct rtp_header_t {
 
     uint8_t *payload;
     ptrdiff_t payload_sz;
-} rtp_header_t;
+} rtp_packet_t;
 
-esp_err_t parse_rtp_header(const uint8_t *buf, const ptrdiff_t sz, rtp_header_t *out);
+esp_err_t parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz, rtp_packet_t *out);
 
-esp_err_t partial_parse_rtp_header(const uint8_t *buf, const ptrdiff_t sz,
+esp_err_t partial_parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz,
                                    uint16_t *sequence_number_out, uint32_t *ssrc_out);
 
-void rtp_header_print(const rtp_header_t h);
+void rtp_packet_print(const rtp_packet_t h);
 
 // https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
 typedef enum rtp_pt {

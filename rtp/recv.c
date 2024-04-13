@@ -52,7 +52,7 @@ int main() {
         // Parse RTP header.
         uint16_t sequence_number = 0;
         uint32_t ssrc = 0;
-        if (partial_parse_rtp_header((uint8_t *)buf, sz, &sequence_number, &ssrc) != ESP_OK) {
+        if (partial_parse_rtp_packet((uint8_t *)buf, sz, &sequence_number, &ssrc) != ESP_OK) {
             ESP_LOGI(TAG, "Failed to parse RTP header");
             continue;
         }
@@ -72,14 +72,14 @@ int main() {
         uint8_t retr_buf[MAX_BUFFER];
         ptrdiff_t retr_sz = 0;
         while ((retr_sz = rtp_jitbuf_retrieve(&jitbuf, retr_buf, sizeof(retr_buf))) > 0) {
-            rtp_header_t header;
-            if (parse_rtp_header(retr_buf, retr_sz, &header) != ESP_OK) {
+            rtp_packet_t packet;
+            if (parse_rtp_packet(retr_buf, retr_sz, &packet) != ESP_OK) {
                 ESP_LOGI(TAG, "Failed to parse RTP header");
                 continue;
             }
 
             ESP_LOGI(TAG, "Feed to JPEG session");
-            if (rtp_jpeg_session_feed(&sess, header) != ESP_OK) {
+            if (rtp_jpeg_session_feed(&sess, packet) != ESP_OK) {
                 ESP_LOGI(TAG, "Failed to feed RTP packet to jpeg_session");
             }
         }

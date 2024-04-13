@@ -8,7 +8,7 @@
 static const char *TAG = "rtp";
 static const ptrdiff_t HEADER_MIN_SZ = 12;
 
-esp_err_t parse_rtp_header(const uint8_t *buf, const ptrdiff_t sz, rtp_header_t *out) {
+esp_err_t parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz, rtp_packet_t *out) {
     assert(out != NULL);
     assert(buf != NULL);
     memset(out, 0, sizeof(*out));
@@ -47,7 +47,7 @@ esp_err_t parse_rtp_header(const uint8_t *buf, const ptrdiff_t sz, rtp_header_t 
     return ESP_OK;
 }
 
-esp_err_t partial_parse_rtp_header(const uint8_t *buf, const ptrdiff_t sz,
+esp_err_t partial_parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz,
                                    uint16_t *sequence_number_out, uint32_t *ssrc_out) {
     assert(buf != NULL);
     assert(sequence_number_out != NULL);
@@ -67,10 +67,10 @@ esp_err_t partial_parse_rtp_header(const uint8_t *buf, const ptrdiff_t sz,
     return ESP_OK;
 }
 
-void rtp_header_print(const rtp_header_t h) {
+void rtp_packet_print(const rtp_packet_t p) {
     ESP_LOGI(TAG, "RTP[v=%hhu ext=%hhu csrc=%hhu mark=%hhu pt=%hhu seq=%hu ts=%u ssrc=%u]",
-             h.version, h.extension, h.csrc_count, h.marker, h.payload_type, h.sequence_number,
-             h.timestamp, h.ssrc);
+             p.version, p.extension, p.csrc_count, p.marker, p.payload_type, p.sequence_number,
+             p.timestamp, p.ssrc);
 }
 
 void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *out) {
@@ -91,7 +91,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
     uint16_t sequence_number = 0;
     uint32_t ssrc = 0;
     assert(sz > 0);
-    esp_err_t err = partial_parse_rtp_header(buf, sz, &sequence_number, &ssrc);
+    esp_err_t err = partial_parse_rtp_packet(buf, sz, &sequence_number, &ssrc);
     if (err != ESP_OK) {
         return err;
     }
@@ -237,7 +237,7 @@ static void rtp_jitbuf_print(rtp_jitbuf_t *j, const bool silence) {
 
         uint16_t sequence_number = 0;
         uint32_t ssrc = 0;
-        const esp_err_t err = partial_parse_rtp_header(j->buf[i], sz, &sequence_number, &ssrc);
+        const esp_err_t err = partial_parse_rtp_packet(j->buf[i], sz, &sequence_number, &ssrc);
         assert(err == ESP_OK);
 
         printf("%5hu ", sequence_number);
@@ -261,7 +261,7 @@ ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz)
     uint16_t sequence_number = 0;
     uint32_t ssrc = 0;
     const esp_err_t err =
-        partial_parse_rtp_header(j->buf[pos], j->buf_szs[pos], &sequence_number, &ssrc);
+        partial_parse_rtp_packet(j->buf[pos], j->buf_szs[pos], &sequence_number, &ssrc);
     assert(err == ESP_OK);
 
     ESP_LOGD(TAG, "jitbuf-> consider packet at %d seq=%hu ts=%u", pos, sequence_number, timestamp);

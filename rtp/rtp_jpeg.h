@@ -21,7 +21,7 @@
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |      Type     |       Q       |     Width     |     Height    |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-typedef struct rtp_jpeg_header_t {
+typedef struct rtp_jpeg_packet_t {
     uint8_t type_specific;
     uint32_t fragment_offset;
     uint8_t type;
@@ -31,11 +31,11 @@ typedef struct rtp_jpeg_header_t {
 
     uint8_t *payload;
     ptrdiff_t payload_sz;
-} rtp_jpeg_header_t;
+} rtp_jpeg_packet_t;
 
-esp_err_t parse_rtp_jpeg_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_header_t *out);
+esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packet_t *out);
 
-void rtp_jpeg_header_print(const rtp_jpeg_header_t h);
+void rtp_jpeg_packet_print(const rtp_jpeg_packet_t h);
 
 // https://datatracker.ietf.org/doc/html/rfc2435#section-3.1.8
 //
@@ -47,19 +47,19 @@ void rtp_jpeg_header_print(const rtp_jpeg_header_t h);
 // |                    Quantization Table Data                    |
 // |                              ...                              |
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-typedef struct rtp_jpeg_qt_header_t {
+typedef struct rtp_jpeg_qt_packet_t {
     uint8_t mbz;
     uint8_t precision;
     uint16_t length;
 
     uint8_t *payload;
     ptrdiff_t payload_sz;
-} rtp_jpeg_qt_header_t;
+} rtp_jpeg_qt_packet_t;
 
-esp_err_t parse_rtp_jpeg_qt_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_header_t *out,
-                                   ptrdiff_t *parsed);
+esp_err_t parse_rtp_jpeg_qt_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_packet_t *out,
+                                   ptrdiff_t *parsed_sz);
 
-void rtp_jpeg_qt_header_print(const rtp_jpeg_qt_header_t h);
+void rtp_jpeg_qt_packet_print(const rtp_jpeg_qt_packet_t h);
 
 typedef struct rtp_jpeg_session_t {  // TODO: rename
     uint32_t ssrc;
@@ -67,7 +67,7 @@ typedef struct rtp_jpeg_session_t {  // TODO: rename
     uint8_t payload[RTP_JPEG_MAX_PAYLOAD_SIZE_BYTES];
     ptrdiff_t payload_sz;
 
-    rtp_jpeg_qt_header_t qt_header;
+    rtp_jpeg_qt_packet_t qt_packet;
     uint8_t qt_data[RTP_JPEG_QT_SIZE_BYTES];
 } rtp_jpeg_session_t;
 
@@ -75,4 +75,4 @@ void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out);
 
 // Feed a packet to an RTP/JPEG session.
 // Packets are expected to be ordered and deduplicated.
-esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_header_t h);
+esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t h);
