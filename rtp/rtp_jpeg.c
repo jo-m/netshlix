@@ -130,6 +130,11 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         // New frame, reset.
         init_rtp_jpeg_session(s->ssrc, s);
 
+        // Copy header.
+        s->header = jp;
+        s->header.payload = NULL;
+        s->header.payload_sz = 0;
+
         // Parse quantization table.
         rtp_jpeg_qt_packet_t qt = {0};
         ptrdiff_t qt_parsed_sz = 0;
@@ -155,6 +160,13 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         ESP_LOGI(TAG, "Added QT jp.payload_sz=%ld qt_parsed_sz=%ld s->payload_sz=%ld",
                  jp.payload_sz, qt_parsed_sz, s->fragments_sz);
     } else {
+        if (jp.type_specific != s->header.type_specific || jp.type != s->header.type ||
+            // Does it match the first packet?
+            jp.q != s->header.q || jp.width != s->header.width || jp.height != s->header.height) {
+            s->fragments_sz = 0;
+            return ESP_ERR_INVALID_STATE;
+        }
+
         if (jp.fragment_offset != s->fragments_sz) {
             s->fragments_sz = 0;
             return ESP_ERR_INVALID_STATE;

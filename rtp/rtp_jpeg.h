@@ -64,6 +64,7 @@ void rtp_jpeg_qt_packet_print(const rtp_jpeg_qt_packet_t h);
 typedef struct rtp_jpeg_session_t {  // TODO: rename
     uint32_t ssrc;
 
+    rtp_jpeg_packet_t header;  // Payload will be NULL.
     uint8_t fragments[RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES];
     ptrdiff_t fragments_sz;
 
