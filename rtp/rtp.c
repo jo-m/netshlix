@@ -3,6 +3,9 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <string.h>
+#ifndef NDEBUG
+#include <stdio.h>
+#endif
 
 __attribute__((unused)) static const char *TAG = "rtp";
 static const ptrdiff_t HEADER_MIN_SZ = 12;
@@ -83,6 +86,36 @@ void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j) {
     j->max_seq_out = -1;
 }
 
+static inline void rtp_jitbuf_print(rtp_jitbuf_t *j __attribute__((unused))) {
+#ifndef NDEBUG
+    for (int i = 0; i < RTP_JITBUF_BUF_N_PACKETS; i++) {
+        if (i == j->buf_top) {
+            printf("  |   ");
+        } else {
+            printf("      ");
+        }
+    }
+    printf("\n");
+
+    for (int i = 0; i < RTP_JITBUF_BUF_N_PACKETS; i++) {
+        const ptrdiff_t sz = j->buf_szs[i];
+        if (sz == 0) {
+            printf("_____ ");
+            continue;
+        }
+
+        uint16_t sequence_number = 0;
+        uint32_t ssrc = 0;
+        const esp_err_t err = partial_parse_rtp_packet(j->buf[i], sz, &sequence_number, &ssrc);
+        assert(err == ESP_OK);
+
+        printf("%5hu ", sequence_number);
+    }
+
+    printf("\n");
+#endif
+}
+
 /**
  * Compare two sequence numbers, handling wraparounds.
  * See http://en.wikipedia.org/wiki/Serial_number_arithmetic for why this works.
@@ -108,6 +141,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
     }
 
     ESP_LOGD(TAG, "->jitbuf state max_seq=%hu buf_top=%d", j->max_seq, j->buf_top);
+    rtp_jitbuf_print(j);
     ESP_LOGD(TAG, "->jitbuf new packet seq=%hu", sequence_number);
 
     // Buffer is empty -> place at start.
@@ -198,7 +232,7 @@ static int rtp_jitbuf_find_oldest_packet(rtp_jitbuf_t *j) {
 static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
                                             const uint16_t sequence_number, uint8_t *buf,
                                             const ptrdiff_t sz) {
-    ESP_LOGV(TAG, "jitbuf-> hand out buffer %d", pos);
+    ESP_LOGV(TAG, "jitbuf-> hand out buffer %d len=%ld", pos, j->buf_szs[pos]);
     j->max_seq_out = sequence_number;
 
     // Copy out.
@@ -232,6 +266,7 @@ static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
 ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz) {
     ESP_LOGD(TAG, "jitbuf-> state max_seq=%hu buf_top=%d max_seq_out=%d", j->max_seq, j->buf_top,
              j->max_seq_out);
+    rtp_jitbuf_print(j);
 
     const int pos = rtp_jitbuf_find_oldest_packet(j);
     if (pos < 0) {

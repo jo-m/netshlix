@@ -6,16 +6,19 @@
  * Minimal dummy header to run code using some ESP-IDF features on Linux.
  */
 
-// #define ESP_LOGE(tag, format, ...)
-// #define ESP_LOGW(tag, format, ...)
-// #define ESP_LOGI(tag, format, ...)
-// #define ESP_LOGD(tag, format, ...)
-// #define ESP_LOGV(tag, format, ...)
+#ifdef NDEBUG
+#define ESP_LOGE(tag, format, ...)
+#define ESP_LOGW(tag, format, ...)
+#define ESP_LOGI(tag, format, ...)
+#define ESP_LOGD(tag, format, ...)
+#define ESP_LOGV(tag, format, ...)
+#else
 #define ESP_LOGE(tag, format, ...) printf("E[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #define ESP_LOGW(tag, format, ...) printf("W[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #define ESP_LOGI(tag, format, ...) printf("I[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #define ESP_LOGD(tag, format, ...) printf("D[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #define ESP_LOGV(tag, format, ...) printf("V[%s]\t" format "\n", tag, ##__VA_ARGS__)
+#endif
 
 typedef int esp_err_t;
 

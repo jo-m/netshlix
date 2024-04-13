@@ -29,7 +29,7 @@ linux_main_san: $(OBJECTS) linux_main.o Makefile
 
 # Fuzz
 
-CFLAGS_FUZZ =
+CFLAGS_FUZZ = -DNDEBUG
 LDFLAGS_FUZZ = -lpcap
 
 linux_fuzztarget_pcap: CC = afl-cc
