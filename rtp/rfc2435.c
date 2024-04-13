@@ -55,19 +55,19 @@ static void MakeTables(int q, u_char *lqt, u_char *cqt) {
     }
 }
 
-u_char lum_dc_codelens[] = {
+static const u_char lum_dc_codelens[] = {
     0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
 };
 
-u_char lum_dc_symbols[] = {
+static const u_char lum_dc_symbols[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 };
 
-u_char lum_ac_codelens[] = {
+static const u_char lum_ac_codelens[] = {
     0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d,
 };
 
-u_char lum_ac_symbols[] = {
+static const u_char lum_ac_symbols[] = {
     0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12, 0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61,
     0x07, 0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08, 0x23, 0x42, 0xb1, 0xc1, 0x15, 0x52,
     0xd1, 0xf0, 0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0a, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x25,
@@ -81,19 +81,19 @@ u_char lum_ac_symbols[] = {
     0xe9, 0xea, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa,
 };
 
-u_char chm_dc_codelens[] = {
+static const u_char chm_dc_codelens[] = {
     0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
 };
 
-u_char chm_dc_symbols[] = {
+static const u_char chm_dc_symbols[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 };
 
-u_char chm_ac_codelens[] = {
+static const u_char chm_ac_codelens[] = {
     0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77,
 };
 
-u_char chm_ac_symbols[] = {
+static const u_char chm_ac_symbols[] = {
     0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21, 0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61,
     0x71, 0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91, 0xa1, 0xb1, 0xc1, 0x09, 0x23, 0x33,
     0x52, 0xf0, 0x15, 0x62, 0x72, 0xd1, 0x0a, 0x16, 0x24, 0x34, 0xe1, 0x25, 0xf1, 0x17, 0x18,
@@ -107,7 +107,7 @@ u_char chm_ac_symbols[] = {
     0xe8, 0xe9, 0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa,
 };
 
-static u_char *MakeQuantHeader(u_char *p, u_char *qt, int tableNo) {
+static u_char *MakeQuantHeader(u_char *p, const u_char *qt, int tableNo) {
     *p++ = 0xff;
     *p++ = 0xdb; /* DQT */
     *p++ = 0;    /* length msb */
@@ -117,8 +117,8 @@ static u_char *MakeQuantHeader(u_char *p, u_char *qt, int tableNo) {
     return (p + 64);
 }
 
-static u_char *MakeHuffmanHeader(u_char *p, u_char *codelens, int ncodes, u_char *symbols,
-                                 int nsymbols, int tableNo, int tableClass) {
+static u_char *MakeHuffmanHeader(u_char *p, const u_char *codelens, int ncodes,
+                                 const u_char *symbols, int nsymbols, int tableNo, int tableClass) {
     *p++ = 0xff;
 
     *p++ = 0xc4;                  /* DHT */
