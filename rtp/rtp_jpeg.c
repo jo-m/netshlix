@@ -22,6 +22,9 @@ esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packe
     out->fragment_offset = (buf[1] << 16) | (buf[2] << 8) | buf[3];
     out->type = buf[4];
     out->q = buf[5];
+    if (out->q == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
     out->width = buf[6] * 8;
     if (out->width > 2040) {
         return ESP_ERR_INVALID_ARG;
@@ -57,6 +60,9 @@ esp_err_t parse_rtp_jpeg_qt_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt
     out->mbz = buf[0];
     out->precision = buf[1];
     out->length = (buf[2] << 8) | buf[3];
+    if (out->length == 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
 
     if (header_sz + out->length > sz) {
         return ESP_ERR_INVALID_SIZE;
