@@ -83,6 +83,16 @@ void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j) {
     j->max_seq_out = -1;
 }
 
+/**
+ * Compare two sequence numbers, handling wraparounds.
+ * See http://en.wikipedia.org/wiki/Serial_number_arithmetic for why this works.
+ * Returns
+ *  - A negative value if seq0 > seq1.
+ *  - 0 if they are equal.
+ *  - Positive if seq0 < seq1.
+ */
+static int32_t seqnum_compare(uint16_t seq0, uint16_t seq1) { return (int16_t)(seq1 - seq0); }
+
 static int mod(int a, int b) { return (a % b + b) % b; }
 
 esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t sz) {
@@ -112,7 +122,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
     }
 
     // Figure out where to place the new packet relative to the current newest one.
-    const int32_t advance = (int32_t)sequence_number - (int32_t)j->max_seq;
+    const int32_t advance = seqnum_compare(j->max_seq, sequence_number);
     ESP_LOGD(TAG, "->jitbuf advance %d", advance);
 
     if (advance == 0) {
@@ -121,7 +131,6 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
     }
 
     if (advance > 0) {
-        // TODO: no need to circle around more than RTP_JITBUF_BUF_N_PACKETS times..
         for (int32_t i = 0; i < advance; i++) {
             j->buf_top = (j->buf_top + 1) % RTP_JITBUF_BUF_N_PACKETS;
             if (j->buf_szs[j->buf_top] > 0) {
@@ -129,10 +138,14 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
                 memset(j->buf[j->buf_top], 0, j->buf_szs[j->buf_top]);
                 j->buf_szs[j->buf_top] = 0;
             }
+
+            // No need to circle around more than that.
+            if (i > RTP_JITBUF_BUF_N_PACKETS) {
+                continue;
+            }
         }
 
         ESP_LOGD(TAG, "->jitbuf place packet at %d", j->buf_top);
-        assert(sequence_number > j->max_seq);
         j->max_seq = sequence_number;
         memcpy(j->buf[j->buf_top], buf, sz);
         assert(j->buf_szs[j->buf_top] == 0);

@@ -32,6 +32,7 @@ gst-launch-1.0 -v udpsrc port=1234 caps="application/x-rtp,media=(string)video,c
 ## TODOs
 
 - [ ] Add fuzzing
+- [ ] Add menuconfig for some defs.
 - [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange
 
 ## Conventions
@@ -81,7 +82,7 @@ sudo ip netns exec s2 \
     gst-launch-1.0 filesrc location=BigBuckBunny_320x180.mp4 \
     ! decodebin \
     ! jpegenc \
-    ! rtpjpegpay \
+    ! rtpjpegpay seqnum-offset=63000 \
     ! udpsink host=192.168.64.1 port=1234
 
 make && sudo ip netns exec s1 ./recv
