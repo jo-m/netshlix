@@ -1,3 +1,4 @@
 *.o
 /linux_main
+/linux_main_san
 *.mp4

@@ -76,6 +76,8 @@ make && sudo ip netns exec s1 ./linux_main
 # With valgrind.
 make && sudo ip netns exec s1 valgrind --leak-check=yes ./linux_main
 
+make linux_main_san && sudo ip netns exec s1 ./linux_main_san
+
 # Run Wireshark.
 sudo ip netns exec s1 wireshark
 ```
