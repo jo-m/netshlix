@@ -2,8 +2,12 @@
 
 #include <stdio.h>
 
-#define ESP_LOGD(tag, format, ...)
-#define ESP_LOGI(tag, format, ...) printf("[%s]\t" format "\n", tag, ##__VA_ARGS__)
+// #define ESP_LOGD(tag, format, ...)
+#define ESP_LOGE(tag, format, ...) printf("E[%s]\t" format "\n", tag, ##__VA_ARGS__)
+#define ESP_LOGW(tag, format, ...) printf("W[%s]\t" format "\n", tag, ##__VA_ARGS__)
+#define ESP_LOGI(tag, format, ...) printf("I[%s]\t" format "\n", tag, ##__VA_ARGS__)
+#define ESP_LOGD(tag, format, ...) printf("D[%s]\t" format "\n", tag, ##__VA_ARGS__)
+#define ESP_LOGV(tag, format, ...) printf("V[%s]\t" format "\n", tag, ##__VA_ARGS__)
 
 typedef int esp_err_t;
 

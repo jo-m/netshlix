@@ -2,15 +2,15 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
-#include <stdio.h>
 #include <string.h>
 
 static const char *TAG = "rtp";
 static const ptrdiff_t HEADER_MIN_SZ = 12;
 
 esp_err_t parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz, rtp_packet_t *out) {
-    assert(out != NULL);
-    assert(buf != NULL);
+    if (out == NULL || buf == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
     memset(out, 0, sizeof(*out));
 
     if (sz < HEADER_MIN_SZ) {
@@ -49,9 +49,9 @@ esp_err_t parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz, rtp_packet_t 
 
 esp_err_t partial_parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz,
                                    uint16_t *sequence_number_out, uint32_t *ssrc_out) {
-    assert(buf != NULL);
-    assert(sequence_number_out != NULL);
-    assert(ssrc_out != NULL);
+    if (buf == NULL || sequence_number_out == NULL || ssrc_out == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
 
     if (sz < HEADER_MIN_SZ) {
         return ESP_ERR_INVALID_SIZE;
@@ -90,7 +90,6 @@ static int mod(int a, int b) { return (a % b + b) % b; }
 esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t sz) {
     uint16_t sequence_number = 0;
     uint32_t ssrc = 0;
-    assert(sz > 0);
     esp_err_t err = partial_parse_rtp_packet(buf, sz, &sequence_number, &ssrc);
     if (err != ESP_OK) {
         return err;
@@ -100,9 +99,8 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
         return ESP_OK;
     }
 
-    ESP_LOGD(TAG, "->jitbuf state max_seq=%hu max_ts=%u buf_top=%d", j->max_seq, j->max_ts,
-             j->buf_top);
-    ESP_LOGD(TAG, "->jitbuf new packet seq=%hu ts=%u", sequence_number, timestamp);
+    ESP_LOGD(TAG, "->jitbuf state max_seq=%hu buf_top=%d", j->max_seq, j->buf_top);
+    ESP_LOGD(TAG, "->jitbuf new packet seq=%hu", sequence_number);
 
     // Buffer is empty -> place at start.
     if (j->buf_top < 0) {
@@ -129,7 +127,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
         for (int32_t i = 0; i < advance; i++) {
             j->buf_top = (j->buf_top + 1) % RTP_JITBUF_BUF_N_PACKETS;
             if (j->buf_szs[j->buf_top] > 0) {
-                ESP_LOGI(TAG, "->jitbuf dropping packet from end of buffer at %d", j->buf_top);
+                ESP_LOGD(TAG, "->jitbuf dropping packet from end of buffer at %d", j->buf_top);
                 memset(j->buf[j->buf_top], 0, j->buf_szs[j->buf_top]);
                 j->buf_szs[j->buf_top] = 0;
             }
@@ -147,7 +145,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
 
     if (advance <= -RTP_JITBUF_BUF_N_PACKETS) {
         // Too old, drop.
-        ESP_LOGI(TAG, "->jitbuf dropping incoming packet which is too late seq=%hu diff=%d",
+        ESP_LOGD(TAG, "->jitbuf dropping incoming packet which is too late seq=%hu diff=%d",
                  sequence_number, advance);
         return ESP_OK;
     }
@@ -156,8 +154,12 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
     const int pos = mod(j->buf_top + advance, RTP_JITBUF_BUF_N_PACKETS);
     ESP_LOGD(TAG, "->jitbuf older packet seq=%hu diff=%d placing at %d", sequence_number, advance,
              pos);
+    if (j->buf_szs[pos] != 0) {
+        ESP_LOGD(TAG, "->jitbuf dropping older duplicate packet seq=%hu diff=%d", sequence_number,
+                 advance);
+        return ESP_OK;
+    }
     memcpy(j->buf[pos], buf, sz);
-    assert(j->buf_szs[pos] == 0);  // TODO: support dropping of duplicate older packets
     j->buf_szs[pos] = sz;
 
     return ESP_OK;
@@ -185,12 +187,14 @@ static int rtp_jitbuf_find_oldest_packet(rtp_jitbuf_t *j) {
 static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
                                             const uint16_t sequence_number, uint8_t *buf,
                                             const ptrdiff_t sz) {
-    assert(sz >= RTP_JITBUF_PACKET_MAX_SIZE);
-    assert(pos >= 0 && pos < RTP_JITBUF_BUF_N_PACKETS);
-    ESP_LOGD(TAG, "jitbuf-> hand out buffer %d", pos);
+    ESP_LOGV(TAG, "jitbuf-> hand out buffer %d", pos);
     j->max_seq_out = sequence_number;
 
     // Copy out.
+    if (sz < RTP_JITBUF_PACKET_MAX_SIZE) {
+        return 0;
+    }
+    assert(pos >= 0 && pos < RTP_JITBUF_BUF_N_PACKETS);
     const ptrdiff_t ret = j->buf_szs[pos];
     memcpy(buf, j->buf[pos], j->buf_szs[pos]);
 
@@ -214,46 +218,13 @@ static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
     return ret;
 }
 
-static void rtp_jitbuf_print(rtp_jitbuf_t *j, const bool silence) {
-    if (silence) {
-        return;
-    }
-
-    for (int i = 0; i < RTP_JITBUF_BUF_N_PACKETS; i++) {
-        if (i == j->buf_top) {
-            printf("  |   ");
-        } else {
-            printf("      ");
-        }
-    }
-    printf("\n");
-
-    for (int i = 0; i < RTP_JITBUF_BUF_N_PACKETS; i++) {
-        const ptrdiff_t sz = j->buf_szs[i];
-        if (sz == 0) {
-            printf("_____ ");
-            continue;
-        }
-
-        uint16_t sequence_number = 0;
-        uint32_t ssrc = 0;
-        const esp_err_t err = partial_parse_rtp_packet(j->buf[i], sz, &sequence_number, &ssrc);
-        assert(err == ESP_OK);
-
-        printf("%5hu ", sequence_number);
-    }
-
-    printf("\n");
-}
-
 ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz) {
-    ESP_LOGD(TAG, "jitbuf-> state max_seq=%hu max_ts=%u buf_top=%d max_seq_out=%d max_ts_out=%ld",
-             j->max_seq, j->max_ts, j->buf_top, j->max_seq_out, j->max_ts_out);
-    rtp_jitbuf_print(j, true);
+    ESP_LOGD(TAG, "jitbuf-> state max_seq=%hu buf_top=%d max_seq_out=%d", j->max_seq, j->buf_top,
+             j->max_seq_out);
 
     const int pos = rtp_jitbuf_find_oldest_packet(j);
     if (pos < 0) {
-        ESP_LOGD(TAG, "jitbuf-> is empty");
+        ESP_LOGV(TAG, "jitbuf-> is empty");
         return 0;
     }
 
@@ -262,9 +233,13 @@ ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz)
     uint32_t ssrc = 0;
     const esp_err_t err =
         partial_parse_rtp_packet(j->buf[pos], j->buf_szs[pos], &sequence_number, &ssrc);
-    assert(err == ESP_OK);
+    if (err != ESP_OK) {
+        // This should never happen, we parse before placing them in buf.
+        assert(false);
+        return 0;
+    }
 
-    ESP_LOGD(TAG, "jitbuf-> consider packet at %d seq=%hu ts=%u", pos, sequence_number, timestamp);
+    ESP_LOGV(TAG, "jitbuf-> consider packet at %d seq=%hu", pos, sequence_number);
 
     if (j->max_seq_out < 0 || sequence_number == j->max_seq_out + 1) {
         ESP_LOGD(TAG, "jitbuf-> hand out packet next in seq");
@@ -278,6 +253,6 @@ ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz)
         return rtp_jitbuf_hand_out_buffer(j, pos, sequence_number, buf, sz);
     }
 
-    ESP_LOGD(TAG, "jitbuf-> nothing to hand out pos=%d top=%d +1=", pos, j->buf_top);
+    ESP_LOGV(TAG, "jitbuf-> nothing to hand out pos=%d top=%d +1=", pos, j->buf_top);
     return 0;
 }

@@ -10,8 +10,9 @@
 static const char *TAG = "mjpg";
 
 esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packet_t *out) {
-    assert(out != NULL);
-    assert(buf != NULL);
+    if (out == NULL || buf == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
     memset(out, 0, sizeof(*out));
 
     const ptrdiff_t header_sz = 8;
@@ -47,9 +48,9 @@ void rtp_jpeg_packet_print(const rtp_jpeg_packet_t p) {
 
 esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out,
                             ptrdiff_t *parsed_sz) {
-    assert(buf != NULL);
-    assert(out != NULL);
-    assert(parsed_sz != NULL);
+    if (out == NULL || buf == NULL || parsed_sz == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
     memset(out, 0, sizeof(*out));
     *parsed_sz = 0;
 
@@ -91,17 +92,21 @@ static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
         return ESP_ERR_INVALID_STATE;
     }
 
-    // We only support 8 bit precision.
-    assert(RTP_JPEG_QT_DATA_SIZE_BYTES == 128);
-    assert((s->qt_header.precision & 1) == 0);
-    assert((s->qt_header.precision & 2) == 0);
+    // We only support 8 bit precision for now.
+    if (RTP_JPEG_QT_DATA_SIZE_BYTES != 128 || (s->qt_header.precision & 1) ||
+        (s->qt_header.precision & 2)) {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
     const ptrdiff_t lqt_sz = (s->qt_header.precision & 1) ? 128 : 64;
 
     uint8_t jfif_header[1024];
     const ptrdiff_t jfif_header_sz =
         rfc2435_make_headers(&jfif_header[0], s->header.type, s->header.width >> 3,
                              s->header.height >> 3, &s->qt_data[0], &s->qt_data[lqt_sz], 0);
-    assert(jfif_header_sz < (ptrdiff_t)sizeof(jfif_header));
+    if (jfif_header_sz > (ptrdiff_t)sizeof(jfif_header)) {
+        // This should never happen.
+        assert(false);
+    }
 
     // TODO: emit frame
 
@@ -113,12 +118,10 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
 
     if (p.padding || p.extension || p.csrc_count || p.payload_type != RTP_PT_JPEG) {
         // We cannot handle that.
-        ESP_LOGI(TAG, "Not supported");
         return ESP_ERR_NOT_SUPPORTED;
     }
     if (p.ssrc != s->ssrc) {
         // Not our session.
-        ESP_LOGI(TAG, "Not our session");
         return ESP_ERR_INVALID_ARG;
     }
 
@@ -132,7 +135,6 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
     // TODO: eventually support jp.q < 128.
     if (!(jp.type == 1 && jp.type_specific == 0 && jp.q >= 128)) {
         // We cannot handle that.
-        ESP_LOGI(TAG, "Not supported");
         return ESP_ERR_NOT_SUPPORTED;
     }
 
@@ -171,7 +173,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         memcpy(s->fragments, jp.payload + qt_parsed_sz, payload_sz);
         s->fragments_sz = payload_sz;
 
-        ESP_LOGI(TAG, "Added QT jp.payload_sz=%ld qt_parsed_sz=%ld s->payload_sz=%ld",
+        ESP_LOGD(TAG, "Added QT jp.payload_sz=%ld qt_parsed_sz=%ld s->payload_sz=%ld",
                  jp.payload_sz, qt_parsed_sz, s->fragments_sz);
     } else {
         if (jp.type_specific != s->header.type_specific || jp.type != s->header.type ||
