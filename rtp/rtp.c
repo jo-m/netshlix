@@ -140,6 +140,10 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
         return ESP_OK;
     }
 
+    if (sz > RTP_JITBUF_PACKET_MAX_SIZE) {
+        return ESP_ERR_INVALID_SIZE;
+    }
+
     ESP_LOGD(TAG, "->jitbuf state max_seq=%hu buf_top=%d", j->max_seq, j->buf_top);
     rtp_jitbuf_print(j);
     ESP_LOGD(TAG, "->jitbuf new packet seq=%hu", sequence_number);
@@ -150,6 +154,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
         assert(j->max_seq == 0);
         j->max_seq = sequence_number;
         j->buf_top = 0;
+        assert(sz <= RTP_JITBUF_PACKET_MAX_SIZE);
         memcpy(j->buf[j->buf_top], buf, sz);
         j->buf_szs[j->buf_top] = sz;
         return ESP_OK;
@@ -181,6 +186,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
 
         ESP_LOGD(TAG, "->jitbuf place packet at %d", j->buf_top);
         j->max_seq = sequence_number;
+        assert(sz <= RTP_JITBUF_PACKET_MAX_SIZE);
         memcpy(j->buf[j->buf_top], buf, sz);
         assert(j->buf_szs[j->buf_top] == 0);
         j->buf_szs[j->buf_top] = sz;
@@ -204,6 +210,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
                  advance);
         return ESP_OK;
     }
+    assert(sz <= RTP_JITBUF_PACKET_MAX_SIZE);
     memcpy(j->buf[pos], buf, sz);
     j->buf_szs[pos] = sz;
 
@@ -244,6 +251,7 @@ static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
     memcpy(buf, j->buf[pos], j->buf_szs[pos]);
 
     // Delete buf slot.
+    assert(j->buf_szs[pos] <= RTP_JITBUF_PACKET_MAX_SIZE);
     memset(j->buf[pos], 0, j->buf_szs[pos]);
     j->buf_szs[pos] = 0;
 
