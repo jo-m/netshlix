@@ -72,6 +72,10 @@ sudo ip netns exec s2 \
 # Run our app through veth0.
 mkdir -p frames
 make && sudo ip netns exec s1 ./linux_main
+
+# With valgrind.
+make && sudo ip netns exec s1 valgrind --leak-check=yes ./linux_main
+
 # Run Wireshark.
 sudo ip netns exec s1 wireshark
 ```
