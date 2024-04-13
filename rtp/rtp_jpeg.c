@@ -86,7 +86,7 @@ void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out) {
 }
 
 static esp_err_t rtp_jpeg_handle_frame(rtp_jpeg_session_t *s) {
-    if (s->payload_sz < 2) {
+    if (s->fragments_sz < 2) {
         return ESP_ERR_INVALID_STATE;
     }
 
@@ -149,24 +149,24 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         // Copy fragment.
         const ptrdiff_t payload_sz = jp.payload_sz - qt_parsed_sz;
         assert(payload_sz >= 0);
-        memcpy(s->payload, jp.payload + qt_parsed_sz, payload_sz);
-        s->payload_sz = payload_sz;
+        memcpy(s->fragments, jp.payload + qt_parsed_sz, payload_sz);
+        s->fragments_sz = payload_sz;
 
         ESP_LOGI(TAG, "Added QT jp.payload_sz=%ld qt_parsed_sz=%ld s->payload_sz=%ld",
-                 jp.payload_sz, qt_parsed_sz, s->payload_sz);
+                 jp.payload_sz, qt_parsed_sz, s->fragments_sz);
     } else {
-        if (jp.fragment_offset != s->payload_sz) {
-            s->payload_sz = 0;
+        if (jp.fragment_offset != s->fragments_sz) {
+            s->fragments_sz = 0;
             return ESP_ERR_INVALID_STATE;
         }
 
-        if (jp.payload_sz + s->payload_sz > (ptrdiff_t)sizeof(s->payload)) {
-            s->payload_sz = 0;
+        if (jp.payload_sz + s->fragments_sz > (ptrdiff_t)sizeof(s->fragments)) {
+            s->fragments_sz = 0;
             return ESP_ERR_NO_MEM;
         }
 
-        memcpy(&s->payload[s->payload_sz], jp.payload, jp.payload_sz);
-        s->payload_sz += jp.payload_sz;
+        memcpy(&s->fragments[s->fragments_sz], jp.payload, jp.payload_sz);
+        s->fragments_sz += jp.payload_sz;
     }
 
     if (p.marker == 0) {
@@ -174,7 +174,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
     }
 
     const esp_err_t success = rtp_jpeg_handle_frame(s);
-    s->payload_sz = 0;
+    s->fragments_sz = 0;
 
     return success;
 }

@@ -9,8 +9,8 @@
 
 #define RTP_JPEG_N_FRAMES_BUFFERED 5
 #define RTP_JPEG_MAX_PACKETS_PER_FRAME 24
-#define RTP_JPEG_MAX_PAYLOAD_SIZE_BYTES (50 * 1024)
-#define RTP_JPEG_QT_SIZE_BYTES 128
+#define RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES (50 * 1024)
+#define RTP_JPEG_QT_DATA_SIZE_BYTES 128
 
 // https://datatracker.ietf.org/doc/html/rfc2435#section-3.1
 //
@@ -64,11 +64,11 @@ void rtp_jpeg_qt_packet_print(const rtp_jpeg_qt_packet_t h);
 typedef struct rtp_jpeg_session_t {  // TODO: rename
     uint32_t ssrc;
 
-    uint8_t payload[RTP_JPEG_MAX_PAYLOAD_SIZE_BYTES];
-    ptrdiff_t payload_sz;
+    uint8_t fragments[RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES];
+    ptrdiff_t fragments_sz;
 
     rtp_jpeg_qt_packet_t qt_packet;
-    uint8_t qt_data[RTP_JPEG_QT_SIZE_BYTES];
+    uint8_t qt_data[RTP_JPEG_QT_DATA_SIZE_BYTES];
 } rtp_jpeg_session_t;
 
 void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out);
