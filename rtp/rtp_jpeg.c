@@ -11,7 +11,7 @@ static const char *TAG = "mjpg";
 esp_err_t parse_rtp_jpeg_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_header_t *out) {
     assert(out != NULL);
     assert(buf != NULL);
-    memset(out, 0, sizeof(rtp_jpeg_header_t));
+    memset(out, 0, sizeof(*out));
 
     const ptrdiff_t header_sz = 8;
     if (sz < header_sz) {
@@ -46,7 +46,7 @@ esp_err_t parse_rtp_jpeg_qt_header(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt
     assert(buf != NULL);
     assert(out != NULL);
     assert(parsed != NULL);
-    memset(out, 0, sizeof(rtp_jpeg_qt_header_t));
+    memset(out, 0, sizeof(*out));
     *parsed = 0;
 
     const ptrdiff_t header_sz = 4;
@@ -75,7 +75,7 @@ void rtp_jpeg_qt_header_print(const rtp_jpeg_qt_header_t h) {
 
 void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out) {
     assert(out != NULL);
-    memset(out, 0, sizeof(rtp_jpeg_session_t));
+    memset(out, 0, sizeof(*out));
     out->ssrc = ssrc;
 }
 

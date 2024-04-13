@@ -11,7 +11,7 @@ static const ptrdiff_t HEADER_MIN_SZ = 12;
 esp_err_t parse_rtp_header(const uint8_t *buf, const ptrdiff_t sz, rtp_header_t *out) {
     assert(out != NULL);
     assert(buf != NULL);
-    memset(out, 0, sizeof(rtp_header_t));
+    memset(out, 0, sizeof(*out));
 
     if (sz < HEADER_MIN_SZ) {
         return ESP_ERR_INVALID_SIZE;
@@ -75,7 +75,7 @@ void rtp_header_print(const rtp_header_t h) {
 
 void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *out) {
     assert(out != NULL);
-    memset(out, 0, sizeof(rtp_jitbuf_t));
+    memset(out, 0, sizeof(*out));
 
     out->ssrc = ssrc;
 
