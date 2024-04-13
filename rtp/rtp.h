@@ -6,7 +6,8 @@
 
 #include "fakesp.h"
 
-// https://datatracker.ietf.org/doc/html/rfc3550#section-5.1
+// A parsed RTP packet as per
+// https://datatracker.ietf.org/doc/html/rfc3550#section-5.1.
 //
 // 0                   1                   2                   3
 // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -32,15 +33,24 @@ typedef struct rtp_packet_t {
     uint32_t ssrc;
     uint32_t csrc[16];
 
+    // Pointer to the payload, not owned by this struct.
     uint8_t *payload;
     ptrdiff_t payload_sz;
 } rtp_packet_t;
 
+// Parse a packet from a network buffer.
+// The buf and out params must not be NULL.
+// The payload pointer will point into buf.
+// Returns ESP_OK on success.
 esp_err_t parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz, rtp_packet_t *out);
 
+// Parse only the sequence number and ssrc from a network buffer.
+// The buf and out params must not be NULL.
+// Returns ESP_OK on success.
 esp_err_t partial_parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz,
                                    uint16_t *sequence_number_out, uint32_t *ssrc_out);
 
+// Print a packet via ESP_LOG().
 void rtp_packet_print(const rtp_packet_t h);
 
 // https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
@@ -56,9 +66,10 @@ typedef enum rtp_pt_clockrate {
 #define RTP_JITBUF_BUF_N_PACKETS (40)
 #define RTP_JITBUF_PACKET_MAX_SIZE (1600)
 
-// Reorders RTP packets.
+// A jitterbuffer reorders RTP packets and drops duplicates.
 // Will wait for missing packets until the buffer is full.
 // Packets arriving too late are dropped.
+// Use init_rtp_jitbuf() to initialize an instance before usage.
 typedef struct rtp_jitbuf_t {
     uint32_t ssrc;
 
@@ -74,8 +85,18 @@ typedef struct rtp_jitbuf_t {
     int32_t max_seq_out;
 } rtp_jitbuf_t;
 
-void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *out);
+// Initialize a rtp_jitbuf_t instance.
+void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j);
 
+// Feed a packet to the jitter buffer.
+// Call this once per packet received from the network.
+// Packets with a different SSRC will be silently ignored.
 esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t sz);
 
+// Receive the next packet from the buffer.
+// Will write the data to buf (which has extent sz).
+// Fails if buf is too small to hold the output data.
+// Returns the number of bytes written to buf, or 0 if no packet was available.
+// After each call to rtp_jitbuf_feed(), this should be called repeatedly until no more packets are
+// available.
 ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz);

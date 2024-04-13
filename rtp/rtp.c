@@ -73,14 +73,14 @@ void rtp_packet_print(const rtp_packet_t p) {
              p.timestamp, p.ssrc);
 }
 
-void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *out) {
-    assert(out != NULL);
-    memset(out, 0, sizeof(*out));
+void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j) {
+    assert(j != NULL);
+    memset(j, 0, sizeof(*j));
 
-    out->ssrc = ssrc;
+    j->ssrc = ssrc;
 
-    out->buf_top = -1;
-    out->max_seq_out = -1;
+    j->buf_top = -1;
+    j->max_seq_out = -1;
 }
 
 static int mod(int a, int b) { return (a % b + b) % b; }
@@ -97,7 +97,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
     }
 
     if (ssrc != j->ssrc) {
-        return ESP_ERR_INVALID_ARG;
+        return ESP_OK;
     }
 
     ESP_LOGD(TAG, "->jitbuf state max_seq=%hu max_ts=%u buf_top=%d", j->max_seq, j->max_ts,

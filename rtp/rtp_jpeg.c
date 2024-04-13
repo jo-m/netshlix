@@ -41,12 +41,12 @@ esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packe
 }
 
 void rtp_jpeg_packet_print(const rtp_jpeg_packet_t p) {
-    ESP_LOGI(TAG, "MJPG[typs=%hhu fof=%u t=%hhu q=%hhu sz=%hux%hu]", p.type_specific,
+    ESP_LOGI(TAG, "RTP/JPEG[typs=%hhu fof=%u t=%hhu q=%hhu sz=%hux%hu]", p.type_specific,
              p.fragment_offset, p.type, p.q, p.width, p.height);
 }
 
-esp_err_t parse_rtp_jpeg_qt_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_packet_t *out,
-                                   ptrdiff_t *parsed_sz) {
+esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out,
+                            ptrdiff_t *parsed_sz) {
     assert(buf != NULL);
     assert(out != NULL);
     assert(parsed_sz != NULL);
@@ -76,14 +76,14 @@ esp_err_t parse_rtp_jpeg_qt_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt
     return ESP_OK;
 }
 
-void rtp_jpeg_qt_packet_print(const rtp_jpeg_qt_packet_t p) {
+void rtp_jpeg_qt_print(const rtp_jpeg_qt_t p) {
     ESP_LOGI(TAG, "QT[mbz=%hhu prec=%hhu len=%u]", p.mbz, p.precision, p.length);
 }
 
-void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out) {
-    assert(out != NULL);
-    memset(out, 0, sizeof(*out));
-    out->ssrc = ssrc;
+void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *s) {
+    assert(s != NULL);
+    memset(s, 0, sizeof(*s));
+    s->ssrc = ssrc;
 }
 
 static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
@@ -148,14 +148,13 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         s->header.payload_sz = 0;
 
         // Parse quantization table.
-        rtp_jpeg_qt_packet_t qt = {0};
+        rtp_jpeg_qt_t qt = {0};
         ptrdiff_t qt_parsed_sz = 0;
-        const esp_err_t err2 =
-            parse_rtp_jpeg_qt_packet(jp.payload, jp.payload_sz, &qt, &qt_parsed_sz);
+        const esp_err_t err2 = parse_rtp_jpeg_qt(jp.payload, jp.payload_sz, &qt, &qt_parsed_sz);
         if (err2 != ESP_OK) {
             return err2;
         }
-        rtp_jpeg_qt_packet_print(qt);
+        rtp_jpeg_qt_print(qt);
 
         // Copy quantization table header and data.
         if (qt.length > sizeof(s->qt_data)) {
