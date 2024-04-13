@@ -68,7 +68,7 @@ typedef struct rtp_jpeg_session_t {  // TODO: rename
     uint8_t fragments[RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES];
     ptrdiff_t fragments_sz;
 
-    rtp_jpeg_qt_packet_t qt_packet;
+    rtp_jpeg_qt_packet_t qt_header;
     uint8_t qt_data[RTP_JPEG_QT_DATA_SIZE_BYTES];
 } rtp_jpeg_session_t;
 

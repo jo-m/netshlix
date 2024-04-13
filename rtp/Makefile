@@ -1,5 +1,5 @@
-HEADERS = rtp.h rtp_jpeg.h fakesp.h
-OBJECTS = rtp.o rtp_jpeg.o recv.o backtrace.o
+HEADERS = rtp.h rtp_jpeg.h rfc2435.h fakesp.h
+OBJECTS = rtp.o rtp_jpeg.o rfc2435.o recv.o backtrace.o
 
 default: recv
 

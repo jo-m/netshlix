@@ -160,7 +160,8 @@ static u_char *MakeDRIHeader(u_char *p, u_short dri) {
  *    interchange format (except for possible trailing garbage and
  *    absence of an EOI marker to terminate the scan).
  */
-static int MakeHeaders(u_char *p, int type, int w, int h, u_char *lqt, u_char *cqt, u_short dri) {
+static int MakeHeaders(u_char *p, int type, int w, int h, const u_char *lqt, const u_char *cqt,
+                       u_short dri) {
     u_char *start = p;
 
     /* convert from blocks to pixels */
@@ -224,7 +225,7 @@ static int MakeHeaders(u_char *p, int type, int w, int h, u_char *lqt, u_char *c
 
 void rfc2435_make_tables(int q, uint8_t *lqt, uint8_t *cqt) { MakeTables(q, lqt, cqt); }
 
-int rfc2435_make_headers(uint8_t *p, int type, int w, int h, uint8_t *lqt, uint8_t *cqt,
+int rfc2435_make_headers(uint8_t *p, int type, int w, int h, const uint8_t *lqt, const uint8_t *cqt,
                          uint16_t dri) {
     return MakeHeaders(p, type, w, h, lqt, cqt, dri);
 }

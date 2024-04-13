@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "fakesp.h"
+#include "rfc2435.h"
 
 static const char *TAG = "mjpg";
 
@@ -85,13 +86,24 @@ void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_session_t *out) {
     out->ssrc = ssrc;
 }
 
-static esp_err_t rtp_jpeg_handle_frame(rtp_jpeg_session_t *s) {
+static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
     if (s->fragments_sz < 2) {
         return ESP_ERR_INVALID_STATE;
     }
 
+    // We only support 8 bit precision.
+    assert(RTP_JPEG_QT_DATA_SIZE_BYTES == 128);
+    assert((s->qt_header.precision & 1) == 0);
+    assert((s->qt_header.precision & 2) == 0);
+    const ptrdiff_t lqt_sz = (s->qt_header.precision & 1) ? 128 : 64;
+
+    uint8_t jfif_header[1024];
+    const ptrdiff_t jfif_header_sz =
+        rfc2435_make_headers(&jfif_header[0], s->header.type, s->header.width >> 3,
+                             s->header.height >> 3, &s->qt_data[0], &s->qt_data[lqt_sz], 0);
+    assert(jfif_header_sz < (ptrdiff_t)sizeof(jfif_header));
+
     // TODO: emit frame
-    ESP_LOGI(TAG, "=== EMIT FRAME ===");
 
     return ESP_OK;
 }
@@ -145,11 +157,14 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         }
         rtp_jpeg_qt_packet_print(qt);
 
-        // Copy quantization table.
-        assert(qt.length == sizeof(s->qt_data));
+        // Copy quantization table header and data.
+        if (qt.length > sizeof(s->qt_data)) {
+            s->fragments_sz = 0;
+            return ESP_ERR_INVALID_ARG;
+        }
         memcpy(s->qt_data, qt.payload, qt.length);
-        s->qt_packet = qt;
-        s->qt_packet.payload = s->qt_data;
+        s->qt_header = qt;
+        s->qt_header.payload = s->qt_data;
 
         // Copy fragment.
         const ptrdiff_t payload_sz = jp.payload_sz - qt_parsed_sz;
