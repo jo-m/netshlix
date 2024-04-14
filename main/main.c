@@ -12,7 +12,7 @@
 #include "display.h"
 #include "lcd.h"
 #include "lvgl.h"
-#include "sdkconfig.h"
+#include "wifi.h"
 
 static const char *TAG = "main";
 
@@ -59,6 +59,10 @@ void lvgl_dummy_ui(lv_display_t *disp) {
 
 void app_main(void) {
     ESP_LOGI(TAG, "app_main()");
+
+    wifi_init();
+
+    ESP_LOGI(TAG, "wifi initialized");
 
     esp_lcd_panel_handle_t panel_handle = NULL;
     ESP_ERROR_CHECK(lcd_init(&panel_handle));
