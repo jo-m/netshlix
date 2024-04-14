@@ -1,21 +1,40 @@
 menu "Smalltv Main App Configuration"
 
-    config SMALLTV_WIFI_SSID
-        string "WiFi SSID"
-        default "myssid"
-        help
-            SSID (network name) for the example to connect to.
+    menu "WIFI"
 
-    config SMALLTV_WIFI_PASSWORD
-        string "WiFi Password"
-        default "mypassword"
-        help
-            WiFi password (WPA or WPA2) for the example to use.
+        config SMALLTV_WIFI_SSID
+            string "WiFi SSID"
+            default "myssid"
+            help
+                SSID (network name) for the example to connect to.
 
-    config SMALLTV_WIFI_MAXIMUM_RETRY
-        int "Maximum retry"
-        default 5
-        help
-            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+        config SMALLTV_WIFI_PASSWORD
+            string "WiFi Password"
+            default "mypassword"
+            help
+                WiFi password (WPA or WPA2) for the example to use.
+
+        config SMALLTV_WIFI_MAXIMUM_RETRY
+            int "Maximum retry"
+            default 5
+            help
+                Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    endmenu
+
+    menu "mDNS"
+
+        config SMALLTV_MDNS_HOSTNAME
+            string "mDNS Hostname"
+            default "smalltv"
+            help
+                mDNS Hostname
+
+        config SMALLTV_MDNS_INSTANCE
+            string "mDNS Instance Name"
+            default "smalltv instance"
+            help
+                mDNS Instance Name
+    endmenu
 
 endmenu

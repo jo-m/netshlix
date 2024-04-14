@@ -7,9 +7,11 @@
 #pragma GCC diagnostic pop
 #include <freertos/task.h>
 #include <math.h>
+#include <nvs_flash.h>
 #include <stdio.h>
 
 #include "display.h"
+#include "dns.h"
 #include "lcd.h"
 #include "lvgl.h"
 #include "wifi.h"
@@ -60,9 +62,20 @@ void lvgl_dummy_ui(lv_display_t *disp) {
 void app_main(void) {
     ESP_LOGI(TAG, "app_main()");
 
+    ESP_LOGI(TAG, "Initialize NVS");
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    ESP_LOGI(TAG, "Initialize WIFI");
     wifi_init();
 
-    ESP_LOGI(TAG, "wifi initialized");
+    // Initialize mDNS.
+    ESP_LOGI(TAG, "Initialize mDNS");
+    mdns_svr_init();
 
     esp_lcd_panel_handle_t panel_handle = NULL;
     ESP_ERROR_CHECK(lcd_init(&panel_handle));

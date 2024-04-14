@@ -15,7 +15,6 @@
 #include <freertos/task.h>
 #include <lwip/err.h>
 #include <lwip/sys.h>
-#include <nvs_flash.h>
 
 #define WIFI_SAE_MODE WPA3_SAE_PWE_BOTH
 #define WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
@@ -109,13 +108,6 @@ void wifi_init_sta(void) {
 }
 
 void wifi_init(void) {
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
 }

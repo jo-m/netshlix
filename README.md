@@ -19,7 +19,6 @@ idf.py -p PORT flash monitor
 
 ## Ideas, TODOs
 
-- [ ] Replace ESP_ERROR_CHECK with real error handling
 - [ ] WiFi setup, SoftAP
 - [ ] Touch sensor
 - [ ] RTP/MJPEG
@@ -28,5 +27,6 @@ idf.py -p PORT flash monitor
 - [ ] SPIFFS/littlefs
 - [ ] Flash encryption
 - [ ] OTA updates
+- [ ] Display log buffer
 - [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange
 - [ ] Linting: clang-format, menuconfig format `python -m kconfcheck`
