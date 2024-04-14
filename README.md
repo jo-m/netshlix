@@ -25,7 +25,8 @@ idf.py -p PORT flash monitor
 - [ ] RTP/MJPEG
 - [ ] HTTP API, image upload
 - [ ] Display image from HTTP(s)
-- [ ] SPIFFS
+- [ ] SPIFFS/littlefs
 - [ ] Flash encryption
 - [ ] OTA updates
 - [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange
+- [ ] Linting: clang-format, menuconfig format `python -m kconfcheck`
