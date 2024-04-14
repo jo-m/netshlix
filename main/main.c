@@ -14,6 +14,7 @@
 #include "dns.h"
 #include "lcd.h"
 #include "lvgl.h"
+#include "rtp_udp.h"
 #include "wifi.h"
 
 static const char *TAG = "main";
@@ -73,9 +74,12 @@ void app_main(void) {
     ESP_LOGI(TAG, "Initialize WIFI");
     wifi_init();
 
-    // Initialize mDNS.
     ESP_LOGI(TAG, "Initialize mDNS");
     mdns_svr_init();
+
+    ESP_LOGI(TAG, "Start UDP server");
+    // TODO: (void *)0 is task_param
+    xTaskCreate(rtp_udp_recv_task, "udp_server", 4096, (void *)0, 5, NULL);
 
     esp_lcd_panel_handle_t panel_handle = NULL;
     ESP_ERROR_CHECK(lcd_init(&panel_handle));

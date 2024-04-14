@@ -18,7 +18,7 @@ menu "Smalltv Main App Configuration"
             int "Maximum retry"
             default 5
             help
-                Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+                Set the max retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
 
     endmenu
 
@@ -35,6 +35,17 @@ menu "Smalltv Main App Configuration"
             default "smalltv instance"
             help
                 mDNS Instance Name
+    endmenu
+
+    menu "RTP"
+
+        config SMALLTV_RTP_PORT
+            int "Port"
+            range 0 65535
+            default 1234
+            help
+                Local UDP port the RTP server will listen on.
+
     endmenu
 
 endmenu
