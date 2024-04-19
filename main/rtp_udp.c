@@ -23,48 +23,59 @@
 
 static const char *TAG = "rtp_udp";
 
+static esp_err_t socket_bind(int *sock) {
+    assert(sock != NULL);
+
+    struct sockaddr_in dest_addr = {0};
+    dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(CONFIG_SMALLTV_RTP_PORT);
+
+    *sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    if (*sock < 0) {
+        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        return ESP_FAIL;
+    }
+    ESP_LOGI(TAG, "Socket created");
+
+    const int enable = 1;
+    lwip_setsockopt(*sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
+
+    // Set timeout
+    struct timeval timeout = {0};
+    timeout.tv_sec = 2;  // TODO: configure
+    timeout.tv_usec = 0;
+    setsockopt(*sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout);
+
+    const int err = bind(*sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    if (err < 0) {
+        ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+        return ESP_FAIL;
+    }
+    ESP_LOGI(TAG, "Socket bound, port %d", CONFIG_SMALLTV_RTP_PORT);
+
+    return ESP_OK;
+}
+
 void rtp_udp_recv_task(void *pvParameters __attribute__((unused))) {
     while (1) {
-        struct sockaddr_in dest_addr = {0};
-        dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        dest_addr.sin_family = AF_INET;
-        dest_addr.sin_port = htons(CONFIG_SMALLTV_RTP_PORT);
-
-        int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-        if (sock < 0) {
-            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-            break;
+        int sock = 0;
+        const esp_err_t err = socket_bind(&sock);
+        if (err != ESP_OK) {
+            continue;
         }
-        ESP_LOGI(TAG, "Socket created");
 
-        const int enable = 1;
-        lwip_setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
-
-        // Set timeout
-        struct timeval timeout;
-        timeout.tv_sec = 10;
-        timeout.tv_usec = 0;
-        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout);
-
-        const int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-        if (err < 0) {
-            ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
-        }
-        ESP_LOGI(TAG, "Socket bound, port %d", CONFIG_SMALLTV_RTP_PORT);
-
-        struct sockaddr_storage source_addr;  // Large enough for both IPv4 or IPv6
+        struct sockaddr_storage source_addr={0};
         socklen_t socklen = sizeof(source_addr);
 
-        struct iovec iov;
-        struct msghdr msg;
-        struct cmsghdr *cmsgtmp;
-        u8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
-
         char rx_buffer[128];
+        struct iovec iov={0};
         iov.iov_base = rx_buffer;
         iov.iov_len = sizeof(rx_buffer);
-        msg.msg_control = cmsg_buf;
-        msg.msg_controllen = sizeof(cmsg_buf);
+
+        struct msghdr msg={0};
+        msg.msg_control = NULL;
+        msg.msg_controllen = 0;
         msg.msg_flags = 0;
         msg.msg_iov = &iov;
         msg.msg_iovlen = 1;
@@ -81,19 +92,11 @@ void rtp_udp_recv_task(void *pvParameters __attribute__((unused))) {
             }
 
             // Data received
-            char addr_str[128];
+            char addr_str[CONFIG_SMALLTV_UDP_MTU_BYTES];
             assert(source_addr.ss_family == PF_INET);
             // Get the sender's ip address as string
             inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str,
                         sizeof(addr_str) - 1);
-            for (cmsgtmp = CMSG_FIRSTHDR(&msg); cmsgtmp != NULL;
-                 cmsgtmp = CMSG_NXTHDR(&msg, cmsgtmp)) {
-                if (cmsgtmp->cmsg_level == IPPROTO_IP && cmsgtmp->cmsg_type == IP_PKTINFO) {
-                    struct in_pktinfo *pktinfo;
-                    pktinfo = (struct in_pktinfo *)CMSG_DATA(cmsgtmp);
-                    ESP_LOGI(TAG, "dest ip: %s", inet_ntoa(pktinfo->ipi_addr));
-                }
-            }
 
             rx_buffer[len] = 0;  // Null-terminate whatever we received and treat like a string...
             ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
@@ -113,5 +116,6 @@ void rtp_udp_recv_task(void *pvParameters __attribute__((unused))) {
             close(sock);
         }
     }
+
     vTaskDelete(NULL);
 }
