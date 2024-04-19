@@ -68,7 +68,7 @@ void rtp_udp_recv_task(void *pvParameters __attribute__((unused))) {
         struct sockaddr_storage source_addr={0};
         socklen_t socklen = sizeof(source_addr);
 
-        char rx_buffer[128];
+        char rx_buffer[CONFIG_SMALLTV_UDP_MTU_BYTES];
         struct iovec iov={0};
         iov.iov_base = rx_buffer;
         iov.iov_len = sizeof(rx_buffer);
