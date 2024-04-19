@@ -24,30 +24,21 @@
 static const char *TAG = "rtp_udp";
 
 void rtp_udp_recv_task(void *pvParameters __attribute__((unused))) {
-    char rx_buffer[128];
-    char addr_str[128];
-    int addr_family = AF_INET;
-    int ip_protocol = 0;
-    struct sockaddr_in6 dest_addr;
-
     while (1) {
-        struct sockaddr_in *dest_addr_ip4 = (struct sockaddr_in *)&dest_addr;
-        dest_addr_ip4->sin_addr.s_addr = htonl(INADDR_ANY);
-        dest_addr_ip4->sin_family = AF_INET;
-        dest_addr_ip4->sin_port = htons(CONFIG_SMALLTV_RTP_PORT);
-        ip_protocol = IPPROTO_IP;
+        struct sockaddr_in dest_addr = {0};
+        dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        dest_addr.sin_family = AF_INET;
+        dest_addr.sin_port = htons(CONFIG_SMALLTV_RTP_PORT);
 
-        int sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
+        int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
         if (sock < 0) {
             ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
             break;
         }
         ESP_LOGI(TAG, "Socket created");
 
-#if defined(CONFIG_LWIP_NETBUF_RECVINFO) && !defined(CONFIG_EXAMPLE_IPV6)
-        int enable = 1;
+        const int enable = 1;
         lwip_setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
-#endif
 
         // Set timeout
         struct timeval timeout;
@@ -64,12 +55,12 @@ void rtp_udp_recv_task(void *pvParameters __attribute__((unused))) {
         struct sockaddr_storage source_addr;  // Large enough for both IPv4 or IPv6
         socklen_t socklen = sizeof(source_addr);
 
-#if defined(CONFIG_LWIP_NETBUF_RECVINFO) && !defined(CONFIG_EXAMPLE_IPV6)
         struct iovec iov;
         struct msghdr msg;
         struct cmsghdr *cmsgtmp;
         u8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
 
+        char rx_buffer[128];
         iov.iov_base = rx_buffer;
         iov.iov_len = sizeof(rx_buffer);
         msg.msg_control = cmsg_buf;
@@ -79,53 +70,40 @@ void rtp_udp_recv_task(void *pvParameters __attribute__((unused))) {
         msg.msg_iovlen = 1;
         msg.msg_name = (struct sockaddr *)&source_addr;
         msg.msg_namelen = socklen;
-#endif
 
         while (1) {
             ESP_LOGI(TAG, "Waiting for data");
-#if defined(CONFIG_LWIP_NETBUF_RECVINFO) && !defined(CONFIG_EXAMPLE_IPV6)
             int len = recvmsg(sock, &msg, 0);
-#else
-            int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0,
-                               (struct sockaddr *)&source_addr, &socklen);
-#endif
             // Error occurred during receiving
             if (len < 0) {
                 ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
                 break;
             }
+
             // Data received
-            else {
-                // Get the sender's ip address as string
-                if (source_addr.ss_family == PF_INET) {
-                    inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str,
-                                sizeof(addr_str) - 1);
-#if defined(CONFIG_LWIP_NETBUF_RECVINFO) && !defined(CONFIG_EXAMPLE_IPV6)
-                    for (cmsgtmp = CMSG_FIRSTHDR(&msg); cmsgtmp != NULL;
-                         cmsgtmp = CMSG_NXTHDR(&msg, cmsgtmp)) {
-                        if (cmsgtmp->cmsg_level == IPPROTO_IP && cmsgtmp->cmsg_type == IP_PKTINFO) {
-                            struct in_pktinfo *pktinfo;
-                            pktinfo = (struct in_pktinfo *)CMSG_DATA(cmsgtmp);
-                            ESP_LOGI(TAG, "dest ip: %s", inet_ntoa(pktinfo->ipi_addr));
-                        }
-                    }
-#endif
-                } else if (source_addr.ss_family == PF_INET6) {
-                    inet6_ntoa_r(((struct sockaddr_in6 *)&source_addr)->sin6_addr, addr_str,
-                                 sizeof(addr_str) - 1);
+            char addr_str[128];
+            assert(source_addr.ss_family == PF_INET);
+            // Get the sender's ip address as string
+            inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str,
+                        sizeof(addr_str) - 1);
+            for (cmsgtmp = CMSG_FIRSTHDR(&msg); cmsgtmp != NULL;
+                 cmsgtmp = CMSG_NXTHDR(&msg, cmsgtmp)) {
+                if (cmsgtmp->cmsg_level == IPPROTO_IP && cmsgtmp->cmsg_type == IP_PKTINFO) {
+                    struct in_pktinfo *pktinfo;
+                    pktinfo = (struct in_pktinfo *)CMSG_DATA(cmsgtmp);
+                    ESP_LOGI(TAG, "dest ip: %s", inet_ntoa(pktinfo->ipi_addr));
                 }
+            }
 
-                rx_buffer[len] =
-                    0;  // Null-terminate whatever we received and treat like a string...
-                ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
-                ESP_LOGI(TAG, "%s", rx_buffer);
+            rx_buffer[len] = 0;  // Null-terminate whatever we received and treat like a string...
+            ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
+            ESP_LOGI(TAG, "%s", rx_buffer);
 
-                const int err2 = sendto(sock, rx_buffer, len, 0, (struct sockaddr *)&source_addr,
-                                        sizeof(source_addr));
-                if (err2 < 0) {
-                    ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-                    break;
-                }
+            const int err2 = sendto(sock, rx_buffer, len, 0, (struct sockaddr *)&source_addr,
+                                    sizeof(source_addr));
+            if (err2 < 0) {
+                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                break;
             }
         }
 
