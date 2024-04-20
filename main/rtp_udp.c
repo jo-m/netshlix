@@ -109,14 +109,12 @@ static esp_err_t sock_receive(rtp_udp_t *u) {
     inet_ntoa_r(((struct sockaddr_in *)&u->source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
     ESP_LOGI(TAG, "Received %d bytes from %s:", sz, addr_str);
 
-    const int err2 = sendto(u->sock, u->rx_buf, sz, 0, (struct sockaddr *)&u->source_addr,
-                            sizeof(u->source_addr));
-    if (err2 < 0) {
-        ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-        return ESP_FAIL;
-    }
-
     return ESP_OK;
+}
+
+static void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata __attribute__((unused))) {
+    ESP_LOGI(TAG, "========== FRAME %dx%d %" PRIu32 " ==========", frame.width, frame.height,
+             frame.timestamp);
 }
 
 void rtp_udp_recv_task(void *pvParameters) {
@@ -131,13 +129,54 @@ void rtp_udp_recv_task(void *pvParameters) {
             continue;
         }
 
+        bool sess_initialized = false;
+        rtp_jpeg_session_t sess = {0};
+        rtp_jitbuf_t jitbuf = {0};
+
         while (1) {
             const esp_err_t err2 = sock_receive(&u);
             if (err2 != ESP_OK) {
                 break;
             }
 
-            // TODO: do something with received data.
+            if (!sess_initialized) {
+                // Parse RTP header.
+                uint16_t sequence_number = 0;
+                uint32_t ssrc = 0;
+                if (partial_parse_rtp_packet((uint8_t *)u.rx_buf, u.rx_sz, &sequence_number,
+                                             &ssrc) != ESP_OK) {
+                    ESP_LOGI(TAG, "Failed to parse RTP header");
+                    continue;
+                }
+
+                // Try to initialize session.
+                ESP_LOGI(TAG, "Starting session with ssrc=%" PRIu32, ssrc);
+                init_rtp_jitbuf(ssrc, &jitbuf);
+                init_rtp_jpeg_session(ssrc, jpeg_frame_cb, NULL, &sess);
+                sess_initialized = true;
+            }
+
+            if (rtp_jitbuf_feed(&jitbuf, (uint8_t *)u.rx_buf, u.rx_sz) != ESP_OK) {
+                ESP_LOGI(TAG, "Failed to feed RTP packet to jitbuf");
+                continue;
+            }
+
+            // Feed from jitbuf to jpeg session.
+            ptrdiff_t retr_sz = 0;
+            while ((retr_sz = rtp_jitbuf_retrieve(&jitbuf, (uint8_t *)u.rx_buf, sizeof(u.rx_buf))) >
+                   0) {
+                rtp_packet_t packet;
+                if (parse_rtp_packet((uint8_t *)u.rx_buf, retr_sz, &packet) != ESP_OK) {
+                    ESP_LOGI(TAG, "Failed to parse RTP header");
+                    continue;
+                }
+
+                ESP_LOGD(TAG, "Feed to JPEG session");
+                if (rtp_jpeg_session_feed(&sess, packet) != ESP_OK) {
+                    ESP_LOGI(TAG, "Failed to feed RTP packet to jpeg_session");
+                    continue;
+                }
+            }
         }
 
         sock_shutdown(&u);

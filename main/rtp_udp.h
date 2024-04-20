@@ -7,5 +7,5 @@
 #endif
 
 // Task to receive UDP/RTP packets and depayload them into JPEG frames.
-// Expects a QueueHandle_t as only argument.
+// Expects a QueueHandle_t as pvParameters argument.
 void rtp_udp_recv_task(void *pvParameters);

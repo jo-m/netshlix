@@ -78,7 +78,7 @@ void app_main(void) {
     mdns_svr_init();
 
     ESP_LOGI(TAG, "Start UDP server");
-    QueueHandle_t udp_queue = xQueueCreate(2, 2000); // TODO: element size
+    QueueHandle_t udp_queue = xQueueCreate(2, 2000);  // TODO: element size
     assert(udp_queue != NULL);
     xTaskCreate(rtp_udp_recv_task, "udp_server", 4096, (void *)udp_queue, 5,
                 NULL);  // TODO: adjust stack depth.
