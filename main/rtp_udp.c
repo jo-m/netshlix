@@ -23,6 +23,9 @@
 
 static const char *TAG = "rtp_udp";
 
+_Static_assert(CONFIG_RTP_JITBUF_PACKET_MAX_SIZE == CONFIG_SMALLTV_UDP_MTU_BYTES,
+               "Jitterbuffer packet size should be equal to UDP MTU!");
+
 typedef struct rtp_udp_t {
     QueueHandle_t out_queue;
 
@@ -95,6 +98,7 @@ static esp_err_t sock_receive(rtp_udp_t *u) {
     u->rx_sz = 0;
 
     ESP_LOGD(TAG, "Waiting for data");
+    assert(u->sock >= 0);
     const ptrdiff_t sz = recvmsg(u->sock, &u->msg, 0);
     if (sz < 0) {
         // TODO: maybe special handling for timeout.
@@ -117,7 +121,13 @@ static void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata __attribu
              frame.timestamp);
 }
 
+size_t rtp_udp_recv_task_approx_stack_sz() {
+    return sizeof(rtp_udp_t) + sizeof(rtp_jpeg_session_t) + sizeof(rtp_jitbuf_t) + 10 * 1024;
+}
+
 void rtp_udp_recv_task(void *pvParameters) {
+    ESP_LOGI(TAG, "Started");
+
     rtp_udp_t u = {0};
     u.sock = -1;
     assert(pvParameters != NULL);
@@ -128,6 +138,8 @@ void rtp_udp_recv_task(void *pvParameters) {
         if (err != ESP_OK) {
             continue;
         }
+
+        ESP_LOGI(TAG, "Starting receive loop");
 
         bool sess_initialized = false;
         rtp_jpeg_session_t sess = {0};
@@ -179,6 +191,7 @@ void rtp_udp_recv_task(void *pvParameters) {
             }
         }
 
+        ESP_LOGI(TAG, "Reset socket");
         sock_shutdown(&u);
     }
 

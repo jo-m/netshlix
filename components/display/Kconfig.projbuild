@@ -1,7 +1,7 @@
-menu "Smalltv LCD Configuration"
+menu "Smalltv LCD"
 
     config SMALLTV_LCD_RST_PIN
-        prompt "LCD RST pin (GPIO)"
+        prompt "RST pin (GPIO)"
         int
         default 4
 

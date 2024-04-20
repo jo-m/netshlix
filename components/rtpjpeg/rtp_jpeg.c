@@ -98,9 +98,8 @@ static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
         return ESP_ERR_INVALID_STATE;
     }
 
-    // We only support 8 bit precision for now.
-    if (RTP_JPEG_QT_DATA_SIZE_BYTES != 128 || (s->qt_header.precision & 1) ||
-        (s->qt_header.precision & 2)) {
+    // We only support 8 bit precision Q tables for now.
+    if (sizeof(s->qt_data) != 128 || (s->qt_header.precision & 1) || (s->qt_header.precision & 2)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
     const ptrdiff_t lqt_sz = (s->qt_header.precision & 1) ? 128 : 64;

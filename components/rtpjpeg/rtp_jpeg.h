@@ -77,8 +77,9 @@ esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out
 // Print a quantization table header via ESP_LOG().
 void rtp_jpeg_qt_print(const rtp_jpeg_qt_t h);
 
-#define RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES (50 * 1024)
-#define RTP_JPEG_QT_DATA_SIZE_BYTES 128
+#ifndef ESP_PLATFORM
+#define CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES (30 * 1024)
+#endif
 
 // A fully assembled RTP/JPEG frame.
 typedef struct rtp_jpeg_frame_t {
@@ -114,12 +115,12 @@ typedef struct rtp_jpeg_session_t {
     uint32_t rtp_timestamp;  // RTP timestamp of the frame.
 
     // JPEG fragments payload.
-    uint8_t fragments[RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES];
+    uint8_t fragments[CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES];
     ptrdiff_t fragments_sz;
 
     // Quantization table header, payload will point to qt_data.
     rtp_jpeg_qt_t qt_header;
-    uint8_t qt_data[RTP_JPEG_QT_DATA_SIZE_BYTES];
+    uint8_t qt_data[128];
 
     rtp_jpeg_frame_cb frame_cb;
     void *userdata;

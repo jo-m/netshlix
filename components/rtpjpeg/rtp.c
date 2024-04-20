@@ -91,7 +91,7 @@ void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j) {
 
 static inline void rtp_jitbuf_print(rtp_jitbuf_t *j __attribute__((unused))) {
 #ifndef NDEBUG
-    for (int i = 0; i < RTP_JITBUF_BUF_N_PACKETS; i++) {
+    for (int i = 0; i < CONFIG_RTP_JITBUF_BUF_N_PACKETS; i++) {
         if (i == j->buf_top) {
             printf("  |   ");
         } else {
@@ -100,7 +100,7 @@ static inline void rtp_jitbuf_print(rtp_jitbuf_t *j __attribute__((unused))) {
     }
     printf("\n");
 
-    for (int i = 0; i < RTP_JITBUF_BUF_N_PACKETS; i++) {
+    for (int i = 0; i < CONFIG_RTP_JITBUF_BUF_N_PACKETS; i++) {
         const ptrdiff_t sz = j->buf_szs[i];
         if (sz == 0) {
             printf("_____ ");
@@ -143,7 +143,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
         return ESP_OK;
     }
 
-    if (sz > RTP_JITBUF_PACKET_MAX_SIZE) {
+    if (sz > CONFIG_RTP_JITBUF_PACKET_MAX_SIZE) {
         return ESP_ERR_INVALID_SIZE;
     }
 
@@ -157,7 +157,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
         assert(j->max_seq == 0);
         j->max_seq = sequence_number;
         j->buf_top = 0;
-        assert(sz <= RTP_JITBUF_PACKET_MAX_SIZE);
+        assert(sz <= CONFIG_RTP_JITBUF_PACKET_MAX_SIZE);
         memcpy(j->buf[j->buf_top], buf, sz);
         j->buf_szs[j->buf_top] = sz;
         return ESP_OK;
@@ -174,7 +174,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
 
     if (advance > 0) {
         for (int32_t i = 0; i < advance; i++) {
-            j->buf_top = (j->buf_top + 1) % RTP_JITBUF_BUF_N_PACKETS;
+            j->buf_top = (j->buf_top + 1) % CONFIG_RTP_JITBUF_BUF_N_PACKETS;
             if (j->buf_szs[j->buf_top] > 0) {
                 ESP_LOGD(TAG, "->jitbuf dropping packet from end of buffer at %d", j->buf_top);
                 memset(j->buf[j->buf_top], 0, j->buf_szs[j->buf_top]);
@@ -182,14 +182,14 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
             }
 
             // No need to circle around more than that.
-            if (i > RTP_JITBUF_BUF_N_PACKETS) {
+            if (i > CONFIG_RTP_JITBUF_BUF_N_PACKETS) {
                 continue;
             }
         }
 
         ESP_LOGD(TAG, "->jitbuf place packet at %d", j->buf_top);
         j->max_seq = sequence_number;
-        assert(sz <= RTP_JITBUF_PACKET_MAX_SIZE);
+        assert(sz <= CONFIG_RTP_JITBUF_PACKET_MAX_SIZE);
         memcpy(j->buf[j->buf_top], buf, sz);
         assert(j->buf_szs[j->buf_top] == 0);
         j->buf_szs[j->buf_top] = sz;
@@ -197,7 +197,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
         return ESP_OK;
     }
 
-    if (advance <= -RTP_JITBUF_BUF_N_PACKETS) {
+    if (advance <= -CONFIG_RTP_JITBUF_BUF_N_PACKETS) {
         // Too old, drop.
         ESP_LOGD(TAG,
                  "->jitbuf dropping incoming packet which is too late seq=%" PRIu16
@@ -207,7 +207,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
     }
 
     // Place the packet somewhere in the middle.
-    const int pos = mod(j->buf_top + advance, RTP_JITBUF_BUF_N_PACKETS);
+    const int pos = mod(j->buf_top + advance, CONFIG_RTP_JITBUF_BUF_N_PACKETS);
     ESP_LOGD(TAG, "->jitbuf older packet seq=%" PRIu16 " diff=%" PRId32 " placing at %d",
              sequence_number, advance, pos);
     if (j->buf_szs[pos] != 0) {
@@ -215,7 +215,7 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
                  sequence_number, advance);
         return ESP_OK;
     }
-    assert(sz <= RTP_JITBUF_PACKET_MAX_SIZE);
+    assert(sz <= CONFIG_RTP_JITBUF_PACKET_MAX_SIZE);
     memcpy(j->buf[pos], buf, sz);
     j->buf_szs[pos] = sz;
 
@@ -228,8 +228,8 @@ static int rtp_jitbuf_find_oldest_packet(rtp_jitbuf_t *j) {
     }
 
     // We start searching one after buf_top.
-    for (int i = 1; i <= RTP_JITBUF_BUF_N_PACKETS; i++) {
-        const int pos = (j->buf_top + i) % RTP_JITBUF_BUF_N_PACKETS;
+    for (int i = 1; i <= CONFIG_RTP_JITBUF_BUF_N_PACKETS; i++) {
+        const int pos = (j->buf_top + i) % CONFIG_RTP_JITBUF_BUF_N_PACKETS;
         if (j->buf_szs[pos] <= 0) {
             continue;
         }
@@ -248,15 +248,15 @@ static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
     j->max_seq_out = sequence_number;
 
     // Copy out.
-    if (sz < RTP_JITBUF_PACKET_MAX_SIZE) {
+    if (sz < CONFIG_RTP_JITBUF_PACKET_MAX_SIZE) {
         return 0;
     }
-    assert(pos >= 0 && pos < RTP_JITBUF_BUF_N_PACKETS);
+    assert(pos >= 0 && pos < CONFIG_RTP_JITBUF_BUF_N_PACKETS);
     const ptrdiff_t ret = j->buf_szs[pos];
     memcpy(buf, j->buf[pos], j->buf_szs[pos]);
 
     // Delete buf slot.
-    assert(j->buf_szs[pos] <= RTP_JITBUF_PACKET_MAX_SIZE);
+    assert(j->buf_szs[pos] <= CONFIG_RTP_JITBUF_PACKET_MAX_SIZE);
     memset(j->buf[pos], 0, j->buf_szs[pos]);
     j->buf_szs[pos] = 0;
 
@@ -268,7 +268,7 @@ static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
         j->max_seq = 0;
         j->buf_top = -1;
 
-        for (int i = 0; i < RTP_JITBUF_BUF_N_PACKETS; i++) {
+        for (int i = 0; i < CONFIG_RTP_JITBUF_BUF_N_PACKETS; i++) {
             assert(j->buf_szs[i] == 0);
         }
     }
@@ -306,7 +306,7 @@ ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz)
     }
 
     // Buffer is full, hand out the last packet.
-    if (mod(pos - 1, RTP_JITBUF_BUF_N_PACKETS) == j->buf_top) {
+    if (mod(pos - 1, CONFIG_RTP_JITBUF_BUF_N_PACKETS) == j->buf_top) {
         ESP_LOGD(TAG, "jitbuf-> hand out packet because buffer is full pos=%d top=%d", pos,
                  j->buf_top);
         return rtp_jitbuf_hand_out_buffer(j, pos, sequence_number, buf, sz);

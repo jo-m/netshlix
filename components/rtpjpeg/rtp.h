@@ -68,8 +68,10 @@ typedef enum rtp_pt_clockrate {
     RTP_PT_CLOCKRATE_JPEG = 90000,
 } rtp_pt_clockrate;
 
-#define RTP_JITBUF_BUF_N_PACKETS (40)
-#define RTP_JITBUF_PACKET_MAX_SIZE (1600)
+#ifndef ESP_PLATFORM
+#define CONFIG_RTP_JITBUF_BUF_N_PACKETS (30)
+#define CONFIG_RTP_JITBUF_PACKET_MAX_SIZE (1500)
+#endif
 
 /**
  * A jitterbuffer reorders RTP packets and drops duplicates.
@@ -86,9 +88,9 @@ typedef struct rtp_jitbuf_t {
                        // Negative if the buffer is empty.
 
     // Packet buffer. Spaced by sequence number, i.e. neighbors have a seq difference of 1.
-    uint8_t buf[RTP_JITBUF_BUF_N_PACKETS][RTP_JITBUF_PACKET_MAX_SIZE];
+    uint8_t buf[CONFIG_RTP_JITBUF_BUF_N_PACKETS][CONFIG_RTP_JITBUF_PACKET_MAX_SIZE];
     // Keeps track of occupied slots in the buffer, and their sizes. Uses same indexing as buf.
-    ptrdiff_t buf_szs[RTP_JITBUF_BUF_N_PACKETS];
+    ptrdiff_t buf_szs[CONFIG_RTP_JITBUF_BUF_N_PACKETS];
 
     int32_t max_seq_out;
 } rtp_jitbuf_t;

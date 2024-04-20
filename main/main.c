@@ -77,11 +77,17 @@ void app_main(void) {
     ESP_LOGI(TAG, "Initialize mDNS");
     mdns_svr_init();
 
-    ESP_LOGI(TAG, "Start UDP server");
-    QueueHandle_t udp_queue = xQueueCreate(2, 2000);  // TODO: element size
+    ESP_LOGI(TAG, "Starting UDP server");
+    QueueHandle_t udp_queue = xQueueCreate(2, 1024);
     assert(udp_queue != NULL);
-    xTaskCreate(rtp_udp_recv_task, "udp_server", 4096, (void *)udp_queue, 5,
-                NULL);  // TODO: adjust stack depth.
+    const size_t task_stack_sz = rtp_udp_recv_task_approx_stack_sz();
+    ESP_LOGI(TAG, "Starting task, stack_sz=%u", task_stack_sz);
+    const BaseType_t err = xTaskCreate(rtp_udp_recv_task, "rtp_udp_recv_task", task_stack_sz,
+                                       (void *)udp_queue, 5, NULL);
+    if (err != pdPASS) {
+        ESP_LOGE(TAG, "Failed to start task: %d", err);
+        abort();
+    }
 
     esp_lcd_panel_handle_t panel_handle = NULL;
     ESP_ERROR_CHECK(lcd_init(&panel_handle));

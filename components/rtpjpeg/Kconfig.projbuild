@@ -1,0 +1,24 @@
+menu "RTP/JPEG"
+
+    config RTP_JITBUF_BUF_N_PACKETS
+        prompt "RTP jitterbuffer capacity number of packets"
+        int
+        default 30
+
+    config RTP_JITBUF_PACKET_MAX_SIZE
+        prompt "RTP jitterbuffer capacity size per packet"
+        int
+        default 1500
+        help
+            Should be equal to expected UDP MTU.
+
+    menu "JPEG"
+
+        config RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES
+            prompt "Max allowed payload size per JPEG frame"
+            int
+            default 30690
+
+    endmenu
+
+endmenu
