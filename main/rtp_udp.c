@@ -52,7 +52,7 @@ static esp_err_t sock_bind_prepare(rtp_udp_t *u) {
         ESP_LOGE(TAG, "socket() failed: errno %d", errno);
         return ESP_FAIL;
     }
-    ESP_LOGI(TAG, "Socket created");
+    ESP_LOGD(TAG, "Socket created");
 
     const int enable = 1;
     lwip_setsockopt(u->sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
@@ -101,7 +101,6 @@ static esp_err_t sock_receive(rtp_udp_t *u) {
     assert(u->sock >= 0);
     const ptrdiff_t sz = recvmsg(u->sock, &u->msg, 0);
     if (sz < 0) {
-        // TODO: maybe special handling for timeout.
         ESP_LOGE(TAG, "recvmsg() failed: errno %d", errno);
         return ESP_FAIL;
     }
@@ -111,7 +110,7 @@ static esp_err_t sock_receive(rtp_udp_t *u) {
     char addr_str[16];
     assert(u->source_addr.ss_family == PF_INET);
     inet_ntoa_r(((struct sockaddr_in *)&u->source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
-    ESP_LOGI(TAG, "Received %d bytes from %s:", sz, addr_str);
+    ESP_LOGD(TAG, "Received %d bytes from %s", sz, addr_str);
 
     return ESP_OK;
 }
@@ -139,7 +138,7 @@ void rtp_udp_recv_task(void *pvParameters) {
             continue;
         }
 
-        ESP_LOGI(TAG, "Starting receive loop");
+        ESP_LOGD(TAG, "Starting receive loop");
 
         bool sess_initialized = false;
         rtp_jpeg_session_t sess = {0};
@@ -157,7 +156,7 @@ void rtp_udp_recv_task(void *pvParameters) {
                 uint32_t ssrc = 0;
                 if (partial_parse_rtp_packet((uint8_t *)u.rx_buf, u.rx_sz, &sequence_number,
                                              &ssrc) != ESP_OK) {
-                    ESP_LOGI(TAG, "Failed to parse RTP header");
+                    ESP_LOGD(TAG, "Failed to parse RTP header");
                     continue;
                 }
 
@@ -169,7 +168,7 @@ void rtp_udp_recv_task(void *pvParameters) {
             }
 
             if (rtp_jitbuf_feed(&jitbuf, (uint8_t *)u.rx_buf, u.rx_sz) != ESP_OK) {
-                ESP_LOGI(TAG, "Failed to feed RTP packet to jitbuf");
+                ESP_LOGD(TAG, "Failed to feed RTP packet to jitbuf");
                 continue;
             }
 
@@ -179,19 +178,19 @@ void rtp_udp_recv_task(void *pvParameters) {
                    0) {
                 rtp_packet_t packet;
                 if (parse_rtp_packet((uint8_t *)u.rx_buf, retr_sz, &packet) != ESP_OK) {
-                    ESP_LOGI(TAG, "Failed to parse RTP header");
+                    ESP_LOGD(TAG, "Failed to parse RTP header");
                     continue;
                 }
 
                 ESP_LOGD(TAG, "Feed to JPEG session");
                 if (rtp_jpeg_session_feed(&sess, packet) != ESP_OK) {
-                    ESP_LOGI(TAG, "Failed to feed RTP packet to jpeg_session");
+                    ESP_LOGD(TAG, "Failed to feed RTP packet to jpeg_session");
                     continue;
                 }
             }
         }
 
-        ESP_LOGI(TAG, "Reset socket");
+        ESP_LOGD(TAG, "Reset socket");
         sock_shutdown(&u);
     }
 

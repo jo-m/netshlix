@@ -42,7 +42,7 @@ esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packe
 }
 
 void rtp_jpeg_packet_print(const rtp_jpeg_packet_t p __attribute__((unused))) {
-    ESP_LOGI(TAG,
+    ESP_LOGD(TAG,
              "RTP/JPEG[typs=%" PRIu8 " fof=%" PRIu32 " t=%" PRIu8 " q=%" PRIu8 " sz=%" PRIu16
              "x%" PRIu16 "]",
              p.type_specific, p.fragment_offset, p.type, p.q, p.width, p.height);
@@ -80,7 +80,7 @@ esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out
 }
 
 void rtp_jpeg_qt_print(const rtp_jpeg_qt_t p __attribute__((unused))) {
-    ESP_LOGI(TAG, "QT[mbz=%hhu prec=%hhu len=%u]", p.mbz, p.precision, p.length);
+    ESP_LOGD(TAG, "QT[mbz=%hhu prec=%hhu len=%u]", p.mbz, p.precision, p.length);
 }
 
 void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_frame_cb frame_cb, void *userdata,

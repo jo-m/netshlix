@@ -11,6 +11,15 @@
  * Minimal dummy header to run code using some ESP-IDF features on Linux.
  */
 
+typedef enum {
+    ESP_LOG_NONE,
+    ESP_LOG_ERROR,
+    ESP_LOG_WARN,
+    ESP_LOG_INFO,
+    ESP_LOG_DEBUG,
+    ESP_LOG_VERBOSE,
+} esp_log_level_t;
+
 #ifdef NDEBUG
 #define ESP_LOGE(tag, format, ...)
 #define ESP_LOGW(tag, format, ...)
@@ -24,6 +33,8 @@
 #define ESP_LOGD(tag, format, ...) printf("D[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #define ESP_LOGV(tag, format, ...) printf("V[%s]\t" format "\n", tag, ##__VA_ARGS__)
 #endif
+
+#define CONFIG_LOG_MAXIMUM_LEVEL ESP_LOG_INFO
 
 typedef int esp_err_t;
 
