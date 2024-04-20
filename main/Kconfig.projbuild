@@ -52,7 +52,11 @@ menu "Smalltv Main App Configuration"
             default 1500
             help
                 MTU to assume for UDP packets, will be used to set receive buffer size.
-        
+
+        config SMALLTV_UDP_RECV_TIMEOUT_S
+            int "Receive timeout seconds"
+            range 0 10
+            default 2
 
     endmenu
 
