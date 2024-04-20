@@ -14,6 +14,7 @@
 #include "dns.h"
 #include "lcd.h"
 #include "lvgl.h"
+#include "rtp_jpeg.h"
 #include "rtp_udp.h"
 #include "wifi.h"
 
@@ -78,12 +79,12 @@ void app_main(void) {
     mdns_svr_init();
 
     ESP_LOGI(TAG, "Starting UDP server");
-    QueueHandle_t udp_queue = xQueueCreate(2, 1024);
-    assert(udp_queue != NULL);
+    QueueHandle_t jfif_queue = xQueueCreate(1, RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES);
+    assert(jfif_queue != NULL);
     const size_t task_stack_sz = rtp_udp_recv_task_approx_stack_sz();
     ESP_LOGI(TAG, "Starting task, stack_sz=%u", task_stack_sz);
     const BaseType_t err = xTaskCreate(rtp_udp_recv_task, "rtp_udp_recv_task", task_stack_sz,
-                                       (void *)udp_queue, 5, NULL);
+                                       (void *)jfif_queue, 5, NULL);
     if (err != pdPASS) {
         ESP_LOGE(TAG, "Failed to start task: %d", err);
         abort();

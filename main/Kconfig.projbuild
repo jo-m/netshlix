@@ -49,7 +49,7 @@ menu "Smalltv Main App Configuration"
         config SMALLTV_UDP_MTU_BYTES
             int "UDP MTU Bytes"
             range 1 65535
-            default 1500
+            default 1400
             help
                 MTU to assume for UDP packets, will be used to set receive buffer size.
 

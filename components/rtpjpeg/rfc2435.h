@@ -8,6 +8,8 @@
  */
 void rfc2435_make_tables(int q, uint8_t *lqt, uint8_t *cqt);
 
+#define RFC2435_HEADER_MAX_SIZE_BYTES 739
+
 /**
  * Wraps MakeHeaders from RFC2445 Appendix B.
  * https://datatracker.ietf.org/doc/html/rfc2435

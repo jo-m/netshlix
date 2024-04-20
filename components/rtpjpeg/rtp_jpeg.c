@@ -105,9 +105,11 @@ static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
     const ptrdiff_t lqt_sz = (s->qt_header.precision & 1) ? 128 : 64;
 
     uint8_t jfif_header[1024];
+    _Static_assert(sizeof(jfif_header) >= RFC2435_HEADER_MAX_SIZE_BYTES, "Buffer too small");
     const ptrdiff_t jfif_header_sz =
         rfc2435_make_headers(&jfif_header[0], s->header.type, s->header.width >> 3,
                              s->header.height >> 3, &s->qt_data[0], &s->qt_data[lqt_sz], 0);
+    assert(jfif_header_sz <= RFC2435_HEADER_MAX_SIZE_BYTES);
     // This should never happen as output size of rfc2435_make_headers() is bounded.
     assert(jfif_header_sz <= (ptrdiff_t)sizeof(jfif_header));
 

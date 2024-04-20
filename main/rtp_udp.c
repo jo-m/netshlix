@@ -23,11 +23,11 @@
 
 static const char *TAG = "rtp_udp";
 
-_Static_assert(CONFIG_RTP_JITBUF_PACKET_MAX_SIZE == CONFIG_SMALLTV_UDP_MTU_BYTES,
+_Static_assert(CONFIG_RTP_JITBUF_CAP_PACKET_SIZE_BYTES == CONFIG_SMALLTV_UDP_MTU_BYTES,
                "Jitterbuffer packet size should be equal to UDP MTU!");
 
 typedef struct rtp_udp_t {
-    QueueHandle_t out_queue;
+    QueueHandle_t jfif_out_queue;
 
     int sock;
     struct sockaddr_storage source_addr;
@@ -115,13 +115,24 @@ static esp_err_t sock_receive(rtp_udp_t *u) {
     return ESP_OK;
 }
 
-static void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata __attribute__((unused))) {
+static void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata) {
+    rtp_udp_t *u = (rtp_udp_t *)userdata;
+    assert(u != NULL);
+
     ESP_LOGI(TAG, "========== FRAME %dx%d %" PRIu32 " ==========", frame.width, frame.height,
              frame.timestamp);
+
+    uint8_t buf[RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES] = {0};
+    memcpy(buf, frame.jfif_header, frame.jfif_header_sz);
+    memcpy(buf + frame.jfif_header_sz, frame.payload, frame.payload_sz);
+
+    const int success = xQueueGenericSend(u->jfif_out_queue, buf, 0, queueSEND_TO_BACK);
+    ESP_LOGI(TAG, "Posted to queue success=%d", success);
 }
 
 size_t rtp_udp_recv_task_approx_stack_sz() {
-    return sizeof(rtp_udp_t) + sizeof(rtp_jpeg_session_t) + sizeof(rtp_jitbuf_t) + 10 * 1024;
+    return sizeof(rtp_udp_t) + sizeof(rtp_jpeg_session_t) + sizeof(rtp_jitbuf_t) +
+           RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES + 5 * 1024;
 }
 
 void rtp_udp_recv_task(void *pvParameters) {
@@ -130,7 +141,7 @@ void rtp_udp_recv_task(void *pvParameters) {
     rtp_udp_t u = {0};
     u.sock = -1;
     assert(pvParameters != NULL);
-    u.out_queue = (QueueHandle_t)pvParameters;
+    u.jfif_out_queue = (QueueHandle_t)pvParameters;
 
     while (1) {
         const esp_err_t err = sock_bind_prepare(&u);
@@ -163,7 +174,7 @@ void rtp_udp_recv_task(void *pvParameters) {
                 // Try to initialize session.
                 ESP_LOGI(TAG, "Starting session with ssrc=%" PRIu32, ssrc);
                 init_rtp_jitbuf(ssrc, &jitbuf);
-                init_rtp_jpeg_session(ssrc, jpeg_frame_cb, NULL, &sess);
+                init_rtp_jpeg_session(ssrc, jpeg_frame_cb, &u, &sess);
                 sess_initialized = true;
             }
 

@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "fakesp.h"
+#include "rfc2435.h"
 #include "rtp.h"
 
 /**
@@ -78,8 +79,11 @@ esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out
 void rtp_jpeg_qt_print(const rtp_jpeg_qt_t h);
 
 #ifndef ESP_PLATFORM
-#define CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES (30 * 1024)
+#define CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES (25 * 1024)
 #endif
+
+#define RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES \
+    (RFC2435_HEADER_MAX_SIZE_BYTES + CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES)
 
 // A fully assembled RTP/JPEG frame.
 typedef struct rtp_jpeg_frame_t {
@@ -88,9 +92,12 @@ typedef struct rtp_jpeg_frame_t {
 
     // The image data is separated into header and payload.
     // To pass the image to a parser, concatenate header and payload.
+    // Total max size is RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES.
     uint8_t const *jfif_header;
+    // Max RFC2435_HEADER_MAX_SIZE_BYTES.
     ptrdiff_t jfif_header_sz;
     uint8_t const *payload;
+    // Max CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES.
     ptrdiff_t payload_sz;
 } rtp_jpeg_frame_t;
 

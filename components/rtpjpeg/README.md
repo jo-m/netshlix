@@ -11,7 +11,7 @@ Stream MJPEG via RTP:
 ```bash
 # Send
 gst-launch-1.0 filesrc location=BigBuckBunny_320x180.mp4 \
-    ! decodebin ! jpegenc ! rtpjpegpay ! udpsink host=127.0.0.1 port=1234
+    ! decodebin ! jpegenc ! rtpjpegpay seqnum-offset=63000 mtu=1400 ! udpsink host=127.0.0.1 port=1234
 
 # Receive/play
 gst-launch-1.0 -v udpsrc address=localhost port=1234 \
@@ -66,7 +66,7 @@ sudo ip netns exec s2 \
     gst-launch-1.0 filesrc location=BigBuckBunny_320x180.mp4 \
     ! decodebin \
     ! jpegenc \
-    ! rtpjpegpay seqnum-offset=63000 mtu=1500 ssrc=1234 \
+    ! rtpjpegpay seqnum-offset=63000 mtu=1400 \
     ! udpsink host=192.168.64.1 port=1234
 
 # Run our app through veth0.
