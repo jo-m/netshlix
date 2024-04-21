@@ -19,6 +19,8 @@ static void lcd_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_
     int y2 = area->y2;
     ESP_ERROR_CHECK(esp_lcd_panel_draw_bitmap(panel_handle, x1, y1, x2 + 1, y2 + 1, px_map));
 
+    ESP_LOGD(TAG, "lcd_flush_cb() x1=%d y1=%d x2=%d y2=%d", x1, y1, x2, y2);
+
     lv_display_flush_ready(disp);
 }
 

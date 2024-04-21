@@ -15,7 +15,7 @@ menu "RTP/JPEG"
     menu "JPEG"
 
         config RTP_JPEG_MAX_DATA_SIZE_BYTES
-            prompt "Max allowed payload size per JPEG frame"
+            prompt "Max allowed JPEG frame size"
             int
             default 25600
 

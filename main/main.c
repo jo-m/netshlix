@@ -85,14 +85,17 @@ void app_main(void) {
     ESP_LOGI(TAG, "Initialize mDNS");
     mdns_svr_init();
 
-    ESP_LOGI(TAG, "Starting UDP server");
-    QueueHandle_t jfif_queue = xQueueCreate(1, CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES);
+    ESP_LOGI(TAG, "Initializing JPEG receive buffer");
+    rtp_udp_outbuf_t *jpeg_buf = malloc(sizeof(rtp_udp_outbuf_t));
+    assert(jpeg_buf != NULL);
+    init_rtp_udp_outbuf(jpeg_buf);
     print_free_heap_stack();
-    assert(jfif_queue != NULL);
+
+    ESP_LOGI(TAG, "Starting UDP server");
     const size_t task_stack_sz = rtp_udp_recv_task_approx_stack_sz();
     ESP_LOGI(TAG, "Starting task, stack_sz=%u", task_stack_sz);
     const BaseType_t err = xTaskCreate(rtp_udp_recv_task, "rtp_udp_recv_task", task_stack_sz,
-                                       (void *)jfif_queue, 5, NULL);
+                                       (void *)jpeg_buf, 5, NULL);
     if (err != pdPASS) {
         ESP_LOGE(TAG, "Failed to start task: %d", err);
         abort();
@@ -114,5 +117,17 @@ void app_main(void) {
     while (1) {
         uint32_t time_till_next_ms = lv_timer_handler();
         vTaskDelay(pdMS_TO_TICKS(time_till_next_ms));
+
+        const BaseType_t avail = xSemaphoreTake(jpeg_buf->mut, 0);
+        if (avail == pdTRUE) {
+            if (jpeg_buf->buf_sz > 0) {
+                ESP_LOGI(TAG, "Frame available: len=%d", jpeg_buf->buf_sz);
+                jpeg_buf->buf_sz = 0;
+            }
+
+            xSemaphoreGive(jpeg_buf->mut);
+        } else {
+            ESP_LOGI(TAG, "Semaphore locked");
+        }
     }
 }
