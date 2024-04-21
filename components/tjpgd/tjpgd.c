@@ -352,7 +352,7 @@ static int huffext(                 /* >=0: decoded data, <0: error code */
 
 #else
     const uint8_t *hb, *hd;
-    const uint16_t* hc;
+    const uint16_t *hc;
     unsigned int nc, bl, wbit = jd->dbit % 32;
     uint32_t w = jd->wreg & ((1UL << wbit) - 1);
 
