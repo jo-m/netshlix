@@ -86,6 +86,22 @@ void app_main(void) {
     ESP_LOGI(TAG, "Initialize mDNS");
     mdns_svr_init();
 
+    ESP_LOGI(TAG, "Initialize LCD");
+    esp_lcd_panel_handle_t panel_handle = NULL;
+    ESP_ERROR_CHECK(lcd_init(&panel_handle));
+    assert(panel_handle != NULL);
+    print_free_heap_stack();
+
+    ESP_LOGI(TAG, "Initialize display");
+    lv_display_t *disp = NULL;
+    ESP_ERROR_CHECK(display_init(panel_handle, &disp));
+    assert(disp != NULL);
+    print_free_heap_stack();
+
+    ESP_LOGI(TAG, "Display LVGL animation");
+    lvgl_dummy_ui(disp);
+    print_free_heap_stack();
+
     ESP_LOGI(TAG, "Initializing JPEG receive buffer");
     rtp_udp_outbuf_t *jpeg_buf = malloc(sizeof(rtp_udp_outbuf_t));
     assert(jpeg_buf != NULL);
@@ -102,18 +118,6 @@ void app_main(void) {
         abort();
     }
     print_free_heap_stack();
-
-    esp_lcd_panel_handle_t panel_handle = NULL;
-    ESP_ERROR_CHECK(lcd_init(&panel_handle));
-    assert(panel_handle != NULL);
-
-    lv_display_t *disp = NULL;
-    ESP_ERROR_CHECK(display_init(panel_handle, &disp));
-    assert(disp != NULL);
-    print_free_heap_stack();
-
-    ESP_LOGI(TAG, "Display LVGL animation");
-    lvgl_dummy_ui(disp);
 
     while (1) {
         uint32_t time_till_next_ms = lv_timer_handler();
