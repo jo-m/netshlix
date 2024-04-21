@@ -105,3 +105,28 @@ int main() {
 
     return 0;
 }
+
+// Dummy function used only to measure stack size via `-fstack-usage`.
+void stack_usage() {
+    uint8_t buf[1400];
+    rtp_jpeg_session_t sess = {0};
+    rtp_jitbuf_t jitbuf = {0};
+
+    memset(buf, 0, sizeof(buf));
+
+    // Parse RTP header.
+    uint16_t sequence_number = 0;
+    uint32_t ssrc = 0;
+    partial_parse_rtp_packet((uint8_t *)buf, sizeof(buf), &sequence_number, &ssrc);
+
+    // Try to initialize session.
+    ESP_LOGI(TAG, "Starting session with ssrc=%u", ssrc);
+    init_rtp_jitbuf(ssrc, &jitbuf);
+    init_rtp_jpeg_session(ssrc, jpeg_frame_cb, NULL, &sess);
+
+    rtp_jitbuf_feed(&jitbuf, (uint8_t *)buf, sizeof(buf));
+    rtp_jitbuf_retrieve(&jitbuf, buf, sizeof(buf));
+    rtp_packet_t packet;
+    parse_rtp_packet(buf, sizeof(buf), &packet);
+    rtp_jpeg_session_feed(&sess, packet);
+}

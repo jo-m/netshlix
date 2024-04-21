@@ -4,7 +4,7 @@ OBJECTS = rtp.o rtp_jpeg.o rfc2435.o
 default: linux_main
 
 CC = gcc
-CFLAGS = -g -O2 -std=gnu17 -Wall -Werror -Wextra -Wpedantic -Wshadow -Wsign-compare -Wunreachable-code
+CFLAGS = -g -O2 -std=gnu17 -Wall -Werror -Wextra -Wpedantic -Wshadow -Wsign-compare -Wunreachable-code -fstack-usage
 LDFLAGS =
 
 %.o: %.c $(HEADERS) Makefile
