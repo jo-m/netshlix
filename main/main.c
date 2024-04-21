@@ -61,6 +61,13 @@ void lvgl_dummy_ui(lv_display_t *disp) {
     lv_anim_start(&a);
 }
 
+static void print_free_heap_stack() {
+    ESP_LOGI(TAG, "=== Free: 8BIT=%u largest_block=%u heap=%lu stack=%d",
+             heap_caps_get_free_size(MALLOC_CAP_8BIT),
+             heap_caps_get_largest_free_block(MALLOC_CAP_8BIT), esp_get_free_heap_size(),
+             uxTaskGetStackHighWaterMark(NULL));
+}
+
 void app_main(void) {
     ESP_LOGI(TAG, "app_main()");
 
@@ -80,6 +87,7 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Starting UDP server");
     QueueHandle_t jfif_queue = xQueueCreate(1, CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES);
+    print_free_heap_stack();
     assert(jfif_queue != NULL);
     const size_t task_stack_sz = rtp_udp_recv_task_approx_stack_sz();
     ESP_LOGI(TAG, "Starting task, stack_sz=%u", task_stack_sz);
@@ -89,6 +97,7 @@ void app_main(void) {
         ESP_LOGE(TAG, "Failed to start task: %d", err);
         abort();
     }
+    print_free_heap_stack();
 
     esp_lcd_panel_handle_t panel_handle = NULL;
     ESP_ERROR_CHECK(lcd_init(&panel_handle));
@@ -97,6 +106,7 @@ void app_main(void) {
     lv_display_t *disp = NULL;
     ESP_ERROR_CHECK(display_init(panel_handle, &disp));
     assert(disp != NULL);
+    print_free_heap_stack();
 
     ESP_LOGI(TAG, "Display LVGL animation");
     lvgl_dummy_ui(disp);

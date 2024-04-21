@@ -32,7 +32,6 @@ esp_err_t display_init(esp_lcd_panel_handle_t panel_handle, lv_display_t **disp_
     ESP_LOGI(TAG, "Allocate display buffers");
     // Note that this is equal to API buscfg.max_transfer_sz.
     const size_t buf_sz = SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE / 3;
-    ESP_LOGI(TAG, "Free memory: %lu bytes", esp_get_free_heap_size());
     ESP_LOGI(TAG, "Buf size: %u", buf_sz);
     lv_color_t *buf1 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
     assert(buf1);
