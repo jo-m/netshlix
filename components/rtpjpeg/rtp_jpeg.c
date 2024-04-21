@@ -93,35 +93,38 @@ void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_frame_cb frame_cb, void
     s->userdata = userdata;
 }
 
-static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
-    if (s->fragments_sz < 2) {
-        return ESP_ERR_INVALID_STATE;
-    }
-
+static esp_err_t rtp_jpeg_write_header(rtp_jpeg_session_t *s, const rtp_jpeg_qt_t qt) {
     // We only support 8 bit precision Q tables for now.
-    if (sizeof(s->qt_data) != 128 || (s->qt_header.precision & 1) || (s->qt_header.precision & 2)) {
+    if (qt.payload_sz != 128 || (qt.precision & 1) || (qt.precision & 2)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    const ptrdiff_t lqt_sz = (s->qt_header.precision & 1) ? 128 : 64;
+    const ptrdiff_t lqt_sz = (qt.precision & 1) ? 128 : 64;
 
-    uint8_t jfif_header[1024];
-    _Static_assert(sizeof(jfif_header) >= RFC2435_HEADER_MAX_SIZE_BYTES, "Buffer too small");
+    _Static_assert(sizeof(s->jpeg_data) >= RFC2435_HEADER_MAX_SIZE_BYTES, "Buffer too small");
     const ptrdiff_t jfif_header_sz =
-        rfc2435_make_headers(&jfif_header[0], s->header.type, s->header.width >> 3,
-                             s->header.height >> 3, &s->qt_data[0], &s->qt_data[lqt_sz], 0);
+        rfc2435_make_headers(&s->jpeg_data[0], s->header.type, s->header.width >> 3,
+                             s->header.height >> 3, &qt.payload[0], &qt.payload[lqt_sz], 0);
     assert(jfif_header_sz <= RFC2435_HEADER_MAX_SIZE_BYTES);
-    // This should never happen as output size of rfc2435_make_headers() is bounded.
-    assert(jfif_header_sz <= (ptrdiff_t)sizeof(jfif_header));
+
+    s->jpeg_data_sz = jfif_header_sz;
+    s->jfif_header_sz = jfif_header_sz;
+
+    return ESP_OK;
+}
+
+static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
+    if (s->jfif_header_sz == 0 || s->jpeg_data_sz < s->jfif_header_sz + 2) {
+        return ESP_ERR_INVALID_STATE;
+    }
 
     // Emit frame callback.
     rtp_jpeg_frame_t frame = {0};
     frame.width = s->header.width;
     frame.height = s->header.height;
     frame.timestamp = s->rtp_timestamp;
-    frame.jfif_header = jfif_header;
-    frame.jfif_header_sz = jfif_header_sz;
-    frame.payload = s->fragments;
-    frame.payload_sz = s->fragments_sz;
+    frame.jpeg_data = s->jpeg_data;
+    frame.jpeg_data_sz = s->jpeg_data_sz;
+    frame.jfif_header_sz = s->jfif_header_sz;
 
     assert(s->frame_cb != NULL);
     s->frame_cb(frame, s->userdata);
@@ -175,43 +178,40 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         }
         rtp_jpeg_qt_print(qt);
 
-        // Copy quantization table header and data.
-        if (qt.length > sizeof(s->qt_data)) {
-            s->fragments_sz = 0;
-            return ESP_ERR_INVALID_ARG;
+        // Write JFIF header to data buffer.
+        const esp_err_t err3 = rtp_jpeg_write_header(s, qt);
+        if (err3 != ESP_OK) {
+            return err3;
         }
-        memcpy(s->qt_data, qt.payload, qt.length);
-        s->qt_header = qt;
-        s->qt_header.payload = s->qt_data;
 
         // Copy fragment.
         const ptrdiff_t payload_sz = jp.payload_sz - qt_parsed_sz;
         assert(payload_sz >= 0);
-        memcpy(s->fragments, jp.payload + qt_parsed_sz, payload_sz);
-        s->fragments_sz = payload_sz;
+        memcpy(s->jpeg_data + s->jpeg_data_sz, jp.payload + qt_parsed_sz, payload_sz);
+        s->jpeg_data_sz += payload_sz;
 
         ESP_LOGD(TAG, "Added QT jp.payload_sz=%ld qt_parsed_sz=%ld s->payload_sz=%ld",
-                 (long)jp.payload_sz, (long)qt_parsed_sz, (long)s->fragments_sz);
+                 (long)jp.payload_sz, (long)qt_parsed_sz, (long)s->jpeg_data_sz);
     } else {
         if (jp.type_specific != s->header.type_specific || jp.type != s->header.type ||
             // Does it match the first packet?
             jp.q != s->header.q || jp.width != s->header.width || jp.height != s->header.height) {
-            s->fragments_sz = 0;
+            s->jpeg_data_sz = 0;
             return ESP_ERR_INVALID_STATE;
         }
 
-        if ((int64_t)jp.fragment_offset != s->fragments_sz) {
-            s->fragments_sz = 0;
+        if ((int64_t)jp.fragment_offset + s->jfif_header_sz != s->jpeg_data_sz) {
+            s->jpeg_data_sz = 0;
             return ESP_ERR_INVALID_STATE;
         }
 
-        if (jp.payload_sz + s->fragments_sz > (ptrdiff_t)sizeof(s->fragments)) {
-            s->fragments_sz = 0;
+        if (s->jpeg_data_sz + jp.payload_sz > (ptrdiff_t)sizeof(s->jpeg_data)) {
+            s->jpeg_data_sz = 0;
             return ESP_ERR_NO_MEM;
         }
 
-        memcpy(&s->fragments[s->fragments_sz], jp.payload, jp.payload_sz);
-        s->fragments_sz += jp.payload_sz;
+        memcpy(&s->jpeg_data[s->jpeg_data_sz], jp.payload, jp.payload_sz);
+        s->jpeg_data_sz += jp.payload_sz;
     }
 
     if (p.marker == 0) {
@@ -219,7 +219,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
     }
 
     const esp_err_t success = rtp_jpeg_handle_frame(s);
-    s->fragments_sz = 0;
+    s->jpeg_data_sz = 0;
 
     return success;
 }

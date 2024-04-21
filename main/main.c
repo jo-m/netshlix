@@ -79,7 +79,7 @@ void app_main(void) {
     mdns_svr_init();
 
     ESP_LOGI(TAG, "Starting UDP server");
-    QueueHandle_t jfif_queue = xQueueCreate(1, RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES);
+    QueueHandle_t jfif_queue = xQueueCreate(1, CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES);
     assert(jfif_queue != NULL);
     const size_t task_stack_sz = rtp_udp_recv_task_approx_stack_sz();
     ESP_LOGI(TAG, "Starting task, stack_sz=%u", task_stack_sz);

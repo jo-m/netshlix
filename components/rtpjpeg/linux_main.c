@@ -25,10 +25,8 @@ void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata __attribute__((u
 
     FILE *f = fopen(fname, "w");
     assert(f != NULL);
-    ptrdiff_t written = fwrite(frame.jfif_header, 1, frame.jfif_header_sz, f);
-    assert(written == frame.jfif_header_sz);
-    written = fwrite(frame.payload, 1, frame.payload_sz, f);
-    assert(written == frame.payload_sz);
+    ptrdiff_t written = fwrite(frame.jpeg_data, 1, frame.jpeg_data_sz, f);
+    assert(written == frame.jpeg_data_sz);
     fclose(f);
 }
 

@@ -62,7 +62,7 @@ typedef struct rtp_jpeg_qt_t {
 
     // Pointer to the payload, not owned by this struct.
     uint8_t *payload;
-    ptrdiff_t payload_sz;
+    ptrdiff_t payload_sz;  // Copy of the length field (style consistency).
 } rtp_jpeg_qt_t;
 
 /**
@@ -79,26 +79,19 @@ esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out
 void rtp_jpeg_qt_print(const rtp_jpeg_qt_t h);
 
 #ifndef ESP_PLATFORM
-#define CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES (25 * 1024)
+#define CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES (25 * 1024)
 #endif
-
-#define RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES \
-    (RFC2435_HEADER_MAX_SIZE_BYTES + CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES)
 
 // A fully assembled RTP/JPEG frame.
 typedef struct rtp_jpeg_frame_t {
     int width, height;   // Image size.
     uint32_t timestamp;  // RTP timestamp of the frame.
 
-    // The image data is separated into header and payload.
-    // To pass the image to a parser, concatenate header and payload.
-    // Total max size is RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES.
-    uint8_t const *jfif_header;
-    // Max RFC2435_HEADER_MAX_SIZE_BYTES.
-    ptrdiff_t jfif_header_sz;
-    uint8_t const *payload;
-    // Max CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES.
-    ptrdiff_t payload_sz;
+    // Data in JPEG File Interchange Format (JFIF).
+    // Max size is CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES.
+    uint8_t const *jpeg_data;
+    ptrdiff_t jpeg_data_sz;
+    ptrdiff_t jfif_header_sz;  // Size of the JFIF header, contained in jpeg_data at the start.
 } rtp_jpeg_frame_t;
 
 /**
@@ -121,13 +114,10 @@ typedef struct rtp_jpeg_session_t {
     rtp_jpeg_packet_t header;
     uint32_t rtp_timestamp;  // RTP timestamp of the frame.
 
-    // JPEG fragments payload.
-    uint8_t fragments[CONFIG_RTP_JPEG_MAX_FRAGMENTS_SIZE_BYTES];
-    ptrdiff_t fragments_sz;
-
-    // Quantization table header, payload will point to qt_data.
-    rtp_jpeg_qt_t qt_header;
-    uint8_t qt_data[128];
+    // Will contain the fully assembled frame in JPEG File Interchange Format (JFIF).
+    uint8_t jpeg_data[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES];
+    ptrdiff_t jpeg_data_sz;
+    ptrdiff_t jfif_header_sz;  // Size of the JFIF header, contained in jpeg_data at the start.
 
     rtp_jpeg_frame_cb frame_cb;
     void *userdata;

@@ -122,17 +122,12 @@ static void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata) {
     ESP_LOGI(TAG, "========== FRAME %dx%d %" PRIu32 " ==========", frame.width, frame.height,
              frame.timestamp);
 
-    uint8_t buf[RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES] = {0};
-    memcpy(buf, frame.jfif_header, frame.jfif_header_sz);
-    memcpy(buf + frame.jfif_header_sz, frame.payload, frame.payload_sz);
-
-    const int success = xQueueGenericSend(u->jfif_out_queue, buf, 0, queueSEND_TO_BACK);
+    const int success = xQueueGenericSend(u->jfif_out_queue, frame.jpeg_data, 0, queueSEND_TO_BACK);
     ESP_LOGI(TAG, "Posted to queue success=%d", success);
 }
 
 size_t rtp_udp_recv_task_approx_stack_sz() {
-    return sizeof(rtp_udp_t) + sizeof(rtp_jpeg_session_t) + sizeof(rtp_jitbuf_t) +
-           RTP_JPEG_FRAME_MAX_DATA_SIZE_BYTES + 5 * 1024;
+    return sizeof(rtp_udp_t) + sizeof(rtp_jpeg_session_t) + sizeof(rtp_jitbuf_t) + 5 * 1024;
 }
 
 void rtp_udp_recv_task(void *pvParameters) {
