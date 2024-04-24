@@ -17,7 +17,6 @@
 #include "rtp_jpeg.h"
 #include "rtp_udp.h"
 #include "sdkconfig.h"
-#include "tjpgd.h"
 #include "wifi.h"
 
 static const char *TAG = "main";

@@ -1,0 +1,37 @@
+on: [push]
+name: ci
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+    - name: Create empty sdkconfig.defaults
+      run: touch sdkconfig.defaults
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp_idf_version: v5.2
+        target: esp32
+        path: '.'
+    - name: Archive build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: binaries
+        path: |
+          build/bootloader/bootloader.bin
+          build/partition_table/partition-table.bin
+          build/netshlix.bin
+  clang-format:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+    - name: Install clang-format etc.
+      run: apt-get update && apt-get install -y clang-format-14 git findutils
+    - name: Run clang-format
+      shell: bash
+      run: shopt -s globstar; clang-format-14 --dry-run --Werror **/*.c **/*.h
