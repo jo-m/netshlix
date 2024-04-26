@@ -56,7 +56,7 @@ esp_err_t partial_parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz,
                                    uint16_t *sequence_number_out, uint32_t *ssrc_out);
 
 // Print a packet via ESP_LOG().
-void rtp_packet_print(const rtp_packet_t h);
+void rtp_packet_print(const rtp_packet_t *h);
 
 // https://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
 typedef enum rtp_pt {

@@ -41,11 +41,12 @@ esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packe
     return ESP_OK;
 }
 
-void rtp_jpeg_packet_print(const rtp_jpeg_packet_t p __attribute__((unused))) {
+void rtp_jpeg_packet_print(const rtp_jpeg_packet_t *p __attribute__((unused))) {
+    assert(p != NULL);
     ESP_LOGD(TAG,
              "RTP/JPEG[typs=%" PRIu8 " fof=%" PRIu32 " t=%" PRIu8 " q=%" PRIu8 " sz=%" PRIu16
              "x%" PRIu16 "]",
-             p.type_specific, p.fragment_offset, p.type, p.q, p.width, p.height);
+             p->type_specific, p->fragment_offset, p->type, p->q, p->width, p->height);
 }
 
 esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out,
@@ -79,8 +80,9 @@ esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out
     return ESP_OK;
 }
 
-void rtp_jpeg_qt_print(const rtp_jpeg_qt_t p __attribute__((unused))) {
-    ESP_LOGD(TAG, "QT[mbz=%hhu prec=%hhu len=%u]", p.mbz, p.precision, p.length);
+void rtp_jpeg_qt_print(const rtp_jpeg_qt_t *p __attribute__((unused))) {
+    assert(p != NULL);
+    ESP_LOGD(TAG, "QT[mbz=%hhu prec=%hhu len=%u]", p->mbz, p->precision, p->length);
 }
 
 void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_frame_cb frame_cb, void *userdata,
@@ -93,17 +95,18 @@ void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_frame_cb frame_cb, void
     s->userdata = userdata;
 }
 
-static esp_err_t rtp_jpeg_write_header(rtp_jpeg_session_t *s, const rtp_jpeg_qt_t qt) {
+static esp_err_t rtp_jpeg_write_header(rtp_jpeg_session_t *s, const rtp_jpeg_qt_t *qt) {
+    assert(qt != NULL);
     // We only support 8 bit precision Q tables for now.
-    if (qt.payload_sz != 128 || (qt.precision & 1) || (qt.precision & 2)) {
+    if (qt->payload_sz != 128 || (qt->precision & 1) || (qt->precision & 2)) {
         return ESP_ERR_NOT_SUPPORTED;
     }
-    const ptrdiff_t lqt_sz = (qt.precision & 1) ? 128 : 64;
+    const ptrdiff_t lqt_sz = (qt->precision & 1) ? 128 : 64;
 
     _Static_assert(sizeof(s->jpeg_data) >= RFC2435_HEADER_MAX_SIZE_BYTES, "Buffer too small");
     const ptrdiff_t jfif_header_sz =
         rfc2435_make_headers(&s->jpeg_data[0], s->header.type, s->header.width >> 3,
-                             s->header.height >> 3, &qt.payload[0], &qt.payload[lqt_sz], 0);
+                             s->header.height >> 3, &qt->payload[0], &qt->payload[lqt_sz], 0);
     assert(jfif_header_sz <= RFC2435_HEADER_MAX_SIZE_BYTES);
 
     s->jpeg_data_sz = jfif_header_sz;
@@ -127,26 +130,30 @@ static esp_err_t rtp_jpeg_handle_frame(const rtp_jpeg_session_t *s) {
     frame.jfif_header_sz = s->jfif_header_sz;
 
     assert(s->frame_cb != NULL);
-    s->frame_cb(frame, s->userdata);
+    s->frame_cb(&frame, s->userdata);
 
     return ESP_OK;
 }
 
-esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
+esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t *p) {
+    assert(s != NULL);
+    if (p == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
     rtp_packet_print(p);
 
-    if (p.padding || p.extension || p.csrc_count || p.payload_type != RTP_PT_JPEG) {
+    if (p->padding || p->extension || p->csrc_count || p->payload_type != RTP_PT_JPEG) {
         // We cannot handle that.
         return ESP_ERR_NOT_SUPPORTED;
     }
-    if (p.ssrc != s->ssrc) {
+    if (p->ssrc != s->ssrc) {
         // Not our session.
         return ESP_ERR_INVALID_ARG;
     }
 
     // Parse RTP JPEG header.
     rtp_jpeg_packet_t jp = {0};
-    const esp_err_t err = parse_rtp_jpeg_packet(p.payload, p.payload_sz, &jp);
+    const esp_err_t err = parse_rtp_jpeg_packet(p->payload, p->payload_sz, &jp);
     if (err != ESP_OK) {
         return err;
     }
@@ -157,7 +164,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         return ESP_ERR_NOT_SUPPORTED;
     }
 
-    rtp_jpeg_packet_print(jp);
+    rtp_jpeg_packet_print(&jp);
 
     if (jp.fragment_offset == 0) {
         // New frame, reset.
@@ -167,7 +174,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         s->header = jp;
         s->header.payload = NULL;
         s->header.payload_sz = 0;
-        s->rtp_timestamp = p.timestamp;
+        s->rtp_timestamp = p->timestamp;
 
         // Parse quantization table.
         rtp_jpeg_qt_t qt = {0};
@@ -176,10 +183,10 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         if (err2 != ESP_OK) {
             return err2;
         }
-        rtp_jpeg_qt_print(qt);
+        rtp_jpeg_qt_print(&qt);
 
         // Write JFIF header to data buffer.
-        const esp_err_t err3 = rtp_jpeg_write_header(s, qt);
+        const esp_err_t err3 = rtp_jpeg_write_header(s, &qt);
         if (err3 != ESP_OK) {
             return err3;
         }
@@ -214,7 +221,7 @@ esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t p) {
         s->jpeg_data_sz += jp.payload_sz;
     }
 
-    if (p.marker == 0) {
+    if (p->marker == 0) {
         return ESP_OK;
     }
 

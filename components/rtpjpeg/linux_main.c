@@ -15,9 +15,10 @@ static const char *TAG = "main";
 #define PORT 1234
 #define MAX_BUFFER 65536
 
-void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata __attribute__((unused))) {
-    ESP_LOGI(TAG, "========== FRAME %dx%d %u ==========", frame.width, frame.height,
-             frame.timestamp);
+void jpeg_frame_cb(const rtp_jpeg_frame_t *frame, void *userdata __attribute__((unused))) {
+    assert(frame != NULL);
+    ESP_LOGI(TAG, "========== FRAME %dx%d %u ==========", frame->width, frame->height,
+             frame->timestamp);
 
     static int fcount = 0;
     char fname[128] = {0};
@@ -25,8 +26,8 @@ void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata __attribute__((u
 
     FILE *f = fopen(fname, "w");
     assert(f != NULL);
-    ptrdiff_t written = fwrite(frame.jpeg_data, 1, frame.jpeg_data_sz, f);
-    assert(written == frame.jpeg_data_sz);
+    ptrdiff_t written = fwrite(frame->jpeg_data, 1, frame->jpeg_data_sz, f);
+    assert(written == frame->jpeg_data_sz);
     fclose(f);
 }
 
@@ -95,7 +96,7 @@ int main() {
             }
 
             ESP_LOGI(TAG, "Feed to JPEG session");
-            if (rtp_jpeg_session_feed(&sess, packet) != ESP_OK) {
+            if (rtp_jpeg_session_feed(&sess, &packet) != ESP_OK) {
                 ESP_LOGI(TAG, "Failed to feed RTP packet to jpeg_session");
             }
         }
@@ -126,5 +127,5 @@ void stack_usage() {
     rtp_jitbuf_retrieve(&jitbuf, buf, sizeof(buf));
     rtp_packet_t packet;
     parse_rtp_packet(buf, sizeof(buf), &packet);
-    rtp_jpeg_session_feed(&sess, packet);
+    rtp_jpeg_session_feed(&sess, &packet);
 }

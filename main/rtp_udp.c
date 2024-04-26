@@ -115,12 +115,13 @@ static esp_err_t sock_receive(rtp_udp_t *u) {
     return ESP_OK;
 }
 
-static void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata) {
+static void jpeg_frame_cb(const rtp_jpeg_frame_t *frame, void *userdata) {
+    assert(frame != NULL);
     rtp_udp_t *u = (rtp_udp_t *)userdata;
     assert(u != NULL);
 
-    ESP_LOGI(TAG, "========== FRAME %dx%d %" PRIu32 " ==========", frame.width, frame.height,
-             frame.timestamp);
+    ESP_LOGI(TAG, "========== FRAME %dx%d %" PRIu32 " ==========", frame->width, frame->height,
+             frame->timestamp);
 
     const BaseType_t avail = xSemaphoreTake(u->outbuf->mut, 0);
     if (avail != pdTRUE) {
@@ -128,9 +129,9 @@ static void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata) {
         return;
     }
 
-    assert(frame.jpeg_data_sz <= (ptrdiff_t)sizeof(u->outbuf->_buf));
-    memcpy(u->outbuf->_buf, frame.jpeg_data, frame.jpeg_data_sz);
-    u->outbuf->frame = frame;
+    assert(frame->jpeg_data_sz <= (ptrdiff_t)sizeof(u->outbuf->_buf));
+    memcpy(u->outbuf->_buf, frame->jpeg_data, frame->jpeg_data_sz);
+    u->outbuf->frame = *frame;
     u->outbuf->frame.jpeg_data = u->outbuf->_buf;
 
     xSemaphoreGive(u->outbuf->mut);
@@ -207,7 +208,7 @@ void rtp_udp_recv_task(void *pvParameters) {
                 }
 
                 ESP_LOGD(TAG, "Feed to JPEG session");
-                if (rtp_jpeg_session_feed(&sess, packet) != ESP_OK) {
+                if (rtp_jpeg_session_feed(&sess, &packet) != ESP_OK) {
                     ESP_LOGD(TAG, "Failed to feed RTP packet to jpeg_session");
                     continue;
                 }

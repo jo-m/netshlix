@@ -68,12 +68,13 @@ esp_err_t partial_parse_rtp_packet(const uint8_t *buf, const ptrdiff_t sz,
     return ESP_OK;
 }
 
-void rtp_packet_print(const rtp_packet_t p __attribute__((unused))) {
+void rtp_packet_print(const rtp_packet_t *p __attribute__((unused))) {
+    assert(p != NULL);
     ESP_LOGD(TAG,
              "RTP[v=%" PRIu8 " ext=%" PRIu8 " csrc=%" PRIu8 " mark=%" PRIu8 " pt=%" PRIu8
              " seq=%" PRIu16 " ts=%" PRIu32 " ssrc=%" PRIu32 "]",
-             p.version, p.extension, p.csrc_count, p.marker, p.payload_type, p.sequence_number,
-             p.timestamp, p.ssrc);
+             p->version, p->extension, p->csrc_count, p->marker, p->payload_type,
+             p->sequence_number, p->timestamp, p->ssrc);
 }
 
 void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j) {

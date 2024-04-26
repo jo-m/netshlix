@@ -19,10 +19,10 @@ __attribute__((unused)) static const char *TAG = "fuzz";
 #define PORT 1234
 #define MAX_BUFFER 65536
 
-void jpeg_frame_cb(const rtp_jpeg_frame_t frame __attribute__((unused)),
+void jpeg_frame_cb(const rtp_jpeg_frame_t *frame __attribute__((unused)),
                    void *userdata __attribute__((unused))) {
-    ESP_LOGE(TAG, "========== FRAME %dx%d %u ==========", frame.width, frame.height,
-             frame.timestamp);
+    ESP_LOGE(TAG, "========== FRAME %dx%d %u ==========", frame->width, frame->height,
+             frame->timestamp);
 }
 
 typedef struct udp_packet_t {
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
             }
 
             ESP_LOGI(TAG, "Feed to JPEG session");
-            if (rtp_jpeg_session_feed(&sess, packet) != ESP_OK) {
+            if (rtp_jpeg_session_feed(&sess, &packet) != ESP_OK) {
                 ESP_LOGI(TAG, "Failed to feed RTP packet to jpeg_session");
             }
         }

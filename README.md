@@ -33,7 +33,6 @@ idf.py -p PORT flash monitor
 
 - Names: buf, sz, out
 - Sizes: ptrdiff_t
-- Pass structs by value
 
 ## Ideas, TODOs
 

@@ -40,7 +40,7 @@ typedef struct rtp_jpeg_packet_t {
 esp_err_t parse_rtp_jpeg_packet(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_packet_t *out);
 
 // Print a packet via ESP_LOG().
-void rtp_jpeg_packet_print(const rtp_jpeg_packet_t h);
+void rtp_jpeg_packet_print(const rtp_jpeg_packet_t *p);
 
 /**
  * A parsed JPEG quantization table header+payload as per
@@ -76,7 +76,7 @@ esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out
                             ptrdiff_t *parsed_sz);
 
 // Print a quantization table header via ESP_LOG().
-void rtp_jpeg_qt_print(const rtp_jpeg_qt_t h);
+void rtp_jpeg_qt_print(const rtp_jpeg_qt_t *p);
 
 #ifndef ESP_PLATFORM
 #define CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES (25 * 1024)
@@ -99,7 +99,7 @@ typedef struct rtp_jpeg_frame_t {
  * assembled, at most once per invocation. The buffers remain owned by the session and are valid
  * only during the invocation of the callback.
  */
-typedef void (*rtp_jpeg_frame_cb)(const rtp_jpeg_frame_t frame, void *userdata);
+typedef void (*rtp_jpeg_frame_cb)(const rtp_jpeg_frame_t *frame, void *userdata);
 
 /**
  * A RTP/JPEG session de-payloads and assembles JPEG frames from RTP packets.
@@ -134,4 +134,4 @@ void init_rtp_jpeg_session(const uint32_t ssrc, rtp_jpeg_frame_cb frame_cb, void
  * Feed a RTP packet to an RTP/JPEG session.
  * Packets are expected to be ordered and deduplicated (use jitbuf for this).
  */
-esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t h);
+esp_err_t rtp_jpeg_session_feed(rtp_jpeg_session_t *s, const rtp_packet_t *p);

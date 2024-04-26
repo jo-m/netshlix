@@ -74,7 +74,7 @@ mkdir -p frames
 make && sudo ip netns exec s1 ./linux_main
 
 # With valgrind (sudo apt-get install valgrind).
-make && sudo ip netns exec s1 valgrind --leak-check=yes ./linux_main
+make clean default && sudo ip netns exec s1 valgrind --leak-check=yes ./linux_main
 
 # With clang sanitizers (see Makefile).
 make clean linux_main_san && sudo ip netns exec s1 ./linux_main_san
