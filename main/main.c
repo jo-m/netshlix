@@ -10,6 +10,7 @@
 #include <nvs_flash.h>
 #include <stdio.h>
 
+#include "../managed_components/lvgl__lvgl/src/libs/tjpgd/tjpgd.h"  // Hacky hack - we use lvgl's vendored tjpgd directly.
 #include "display.h"
 #include "dns.h"
 #include "lcd.h"
