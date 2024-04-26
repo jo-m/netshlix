@@ -6,6 +6,7 @@
 #pragma GCC diagnostic pop
 #include <stddef.h>
 
+#include "rtp_jpeg.h"
 #include "sdkconfig.h"
 
 #if !CONFIG_LWIP_NETBUF_RECVINFO
@@ -14,8 +15,8 @@
 
 typedef struct rtp_udp_outbuf_t {
     QueueHandle_t mut;
-    uint8_t buf[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES];
-    ptrdiff_t buf_sz;
+    rtp_jpeg_frame_t frame;
+    uint8_t _buf[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES];
 } rtp_udp_outbuf_t;
 
 void init_rtp_udp_outbuf(rtp_udp_outbuf_t *b);
