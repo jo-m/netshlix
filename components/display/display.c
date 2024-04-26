@@ -32,13 +32,15 @@ esp_err_t display_init(esp_lcd_panel_handle_t panel_handle, lv_display_t **disp_
     lv_tick_set_cb(lcd_lvgl_tick_get_cb);
 
     ESP_LOGI(TAG, "Allocate display buffer(s)");
-    const size_t buf_sz = SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE / 3;
-    _Static_assert(buf_sz == CONFIG_SMALLTV_LCD_MAX_TRANSFER_LINES * SMALLTV_LCD_H_RES *
+    const size_t buf_sz = SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE / 6;
+    _Static_assert(buf_sz <= CONFIG_SMALLTV_LCD_MAX_TRANSFER_LINES * SMALLTV_LCD_H_RES *
                                  SMALLTV_LCD_COLOR_DEPTH_BYTE,
-                   "Should be equal to buscfg.max_transfer_sz");
+                   "Should be <= buscfg.max_transfer_sz");
     ESP_LOGI(TAG, "Buf size: %u", buf_sz);
-    lv_color_t *buf = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
-    assert(buf);
+    lv_color_t *buf0 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
+    assert(buf0);
+    lv_color_t *buf1 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
+    assert(buf1);
 
     ESP_LOGI(TAG, "Initialize LVGL display");
 
@@ -46,7 +48,7 @@ esp_err_t display_init(esp_lcd_panel_handle_t panel_handle, lv_display_t **disp_
     assert(disp != NULL);
     lv_display_set_user_data(disp, (void *)panel_handle);
     lv_display_set_flush_cb(disp, lcd_flush_cb);
-    lv_display_set_buffers(disp, buf, NULL, buf_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, buf0, buf1, buf_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_color_format(disp, SMALLTV_LCD_COLOR_FORMAT);
 
     assert(disp_out != NULL);
