@@ -124,10 +124,8 @@ static void jpeg_frame_cb(const rtp_jpeg_frame_t frame, void *userdata) {
 
     const BaseType_t avail = xSemaphoreTake(u->jpeg_buf->mut, 0);
     if (avail != pdTRUE) {
-        ESP_LOGI(TAG, "Dropping frame");
+        ESP_LOGD(TAG, "Dropping frame");
         return;
-    } else {
-        ESP_LOGI(TAG, "Writing frame");
     }
 
     assert(frame.jpeg_data_sz <= (ptrdiff_t)sizeof(u->jpeg_buf->buf));
