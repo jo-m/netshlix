@@ -89,7 +89,7 @@ typedef struct rtp_jpeg_frame_t {
 
     // Data in JPEG File Interchange Format (JFIF).
     // Max size is CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES.
-    uint8_t const *jpeg_data;
+    const uint8_t *jpeg_data;
     ptrdiff_t jpeg_data_sz;
     ptrdiff_t jfif_header_sz;  // Size of the JFIF header, contained in jpeg_data at the start.
 } rtp_jpeg_frame_t;
