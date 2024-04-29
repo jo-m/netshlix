@@ -13,16 +13,8 @@
 #error "Needs CONFIG_LWIP_NETBUF_RECVINFO=y to work!"
 #endif
 
-typedef struct rtp_udp_outbuf_t {
-    QueueHandle_t mut;
-    rtp_jpeg_frame_t frame;
-    uint8_t _buf[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES];
-} rtp_udp_outbuf_t;
-
-void init_rtp_udp_outbuf(rtp_udp_outbuf_t *b);
-
 size_t rtp_udp_recv_task_approx_stack_sz();
 
 // Task to receive UDP/RTP packets and depayload them into JPEG frames.
-// Expects a rtp_udp_outbuf_t as pvParameters argument.
+// Expects a QueueHandle_t<uint8_t[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES]> as pvParameters argument.
 void rtp_udp_recv_task(void *pvParameters);

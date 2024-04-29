@@ -27,7 +27,7 @@ _Static_assert(CONFIG_RTP_JITBUF_CAP_PACKET_SIZE_BYTES == CONFIG_SMALLTV_UDP_MTU
                "Jitterbuffer packet size should be equal to UDP MTU!");
 
 typedef struct rtp_udp_t {
-    rtp_udp_outbuf_t *outbuf;
+    QueueHandle_t out;
 
     int sock;
     struct sockaddr_storage source_addr;
@@ -123,26 +123,8 @@ static void jpeg_frame_cb(const rtp_jpeg_frame_t *frame, void *userdata) {
     ESP_LOGI(TAG, "========== FRAME %dx%d %" PRIu32 " ==========", frame->width, frame->height,
              frame->timestamp);
 
-    const BaseType_t avail = xSemaphoreTake(u->outbuf->mut, 0);
-    if (avail != pdTRUE) {
-        ESP_LOGD(TAG, "Dropping frame");
-        return;
-    }
-
-    assert(frame->jpeg_data_sz <= (ptrdiff_t)sizeof(u->outbuf->_buf));
-    memcpy(u->outbuf->_buf, frame->jpeg_data, frame->jpeg_data_sz);
-    u->outbuf->frame = *frame;
-    u->outbuf->frame.jpeg_data = u->outbuf->_buf;
-
-    xSemaphoreGive(u->outbuf->mut);
-}
-
-void init_rtp_udp_outbuf(rtp_udp_outbuf_t *b) {
-    assert(b != NULL);
-    memset(b, 0, sizeof(*b));
-
-    b->mut = xSemaphoreCreateMutex();
-    assert(b->mut != NULL);
+    const int success = xQueueGenericSend(u->out, frame->jpeg_data, 0, queueSEND_TO_BACK);
+    ESP_LOGI(TAG, "Posted to queue success=%d", success);
 }
 
 size_t rtp_udp_recv_task_approx_stack_sz() {
@@ -155,7 +137,7 @@ void rtp_udp_recv_task(void *pvParameters) {
     rtp_udp_t u = {0};
     u.sock = -1;
     assert(pvParameters != NULL);
-    u.outbuf = (rtp_udp_outbuf_t *)pvParameters;
+    u.out = (QueueHandle_t)pvParameters;
 
     while (1) {
         const esp_err_t err = sock_bind_prepare(&u);

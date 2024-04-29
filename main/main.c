@@ -10,9 +10,9 @@
 #include <nvs_flash.h>
 #include <stdio.h>
 
-#include "../managed_components/lvgl__lvgl/src/libs/tjpgd/tjpgd.h"  // Hacky hack - we use lvgl's vendored tjpgd directly.
 #include "display.h"
 #include "dns.h"
+#include "jpeg.h"
 #include "lcd.h"
 #include "lvgl.h"
 #include "rtp_jpeg.h"
@@ -70,6 +70,30 @@ static void print_free_heap_stack() {
              uxTaskGetStackHighWaterMark(NULL));
 }
 
+// Expects a QueueHandle_t<uint8_t[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES]> as pvParameters argument.
+void decode_jpeg_task(void *pvParameters) {
+    QueueHandle_t in = (QueueHandle_t)pvParameters;
+
+    // Our copy of the frame for the decoder to read from.
+    uint8_t buf[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES] = {0};
+
+    while (true) {
+        memset(buf, 0, sizeof(buf));
+        if (!xQueueReceive(in, &buf, 0)) {
+            ESP_LOGD(TAG, "Received nothing");
+            vTaskDelay(pdMS_TO_TICKS(2));
+            continue;
+        }
+
+        ESP_LOGD(TAG, "Received frame from queue");
+
+        // Now, decode.
+        ESP_ERROR_CHECK(decode_jpeg(buf, sizeof(buf), NULL));  // TODO: panel_handle
+    }
+}
+
+size_t decode_jpeg_task_approx_stack_sz() { return CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES + 100; }
+
 void app_main(void) {
     ESP_LOGI(TAG, "app_main()");
 
@@ -104,18 +128,28 @@ void app_main(void) {
     print_free_heap_stack();
 
     ESP_LOGI(TAG, "Initializing JPEG receive buffer");
-    rtp_udp_outbuf_t *jpeg_buf = malloc(sizeof(rtp_udp_outbuf_t));
-    assert(jpeg_buf != NULL);
-    init_rtp_udp_outbuf(jpeg_buf);
+    QueueHandle_t rtp_out = xQueueCreate(1, CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES);
+    assert(rtp_out != NULL);
     print_free_heap_stack();
 
     ESP_LOGI(TAG, "Starting UDP server");
-    const size_t task_stack_sz = rtp_udp_recv_task_approx_stack_sz();
-    ESP_LOGI(TAG, "Starting task, stack_sz=%u", task_stack_sz);
-    const BaseType_t err = xTaskCreate(rtp_udp_recv_task, "rtp_udp_recv_task", task_stack_sz,
-                                       (void *)jpeg_buf, 5, NULL);
-    if (err != pdPASS) {
-        ESP_LOGE(TAG, "Failed to start task: %d", err);
+    ESP_LOGI(TAG, "Starting task, stack_sz=%u", rtp_udp_recv_task_approx_stack_sz());
+    const BaseType_t err0 =
+        xTaskCreate(rtp_udp_recv_task, "rtp_udp_recv_task", rtp_udp_recv_task_approx_stack_sz(),
+                    (void *)rtp_out, 5, NULL);
+    if (err0 != pdPASS) {
+        ESP_LOGE(TAG, "Failed to start task: %d", err0);
+        abort();
+    }
+    print_free_heap_stack();
+
+    ESP_LOGI(TAG, "Starting JPEG task");
+    ESP_LOGI(TAG, "Starting task, stack_sz=%u", decode_jpeg_task_approx_stack_sz());
+    const BaseType_t err1 =
+        xTaskCreate(decode_jpeg_task, "decode_jpeg_task", decode_jpeg_task_approx_stack_sz(),
+                    (void *)rtp_out, 5, NULL);
+    if (err1 != pdPASS) {
+        ESP_LOGE(TAG, "Failed to start task: %d", err1);
         abort();
     }
     print_free_heap_stack();
@@ -123,17 +157,5 @@ void app_main(void) {
     while (1) {
         uint32_t time_till_next_ms = lv_timer_handler();
         vTaskDelay(pdMS_TO_TICKS(time_till_next_ms));
-
-        const BaseType_t avail = xSemaphoreTake(jpeg_buf->mut, 0);
-        if (avail == pdTRUE) {
-            if (jpeg_buf->buf_sz > 0) {
-                ESP_LOGI(TAG, "Frame available: len=%d", jpeg_buf->buf_sz);
-                jpeg_buf->buf_sz = 0;
-            }
-
-            xSemaphoreGive(jpeg_buf->mut);
-        } else {
-            ESP_LOGI(TAG, "Semaphore locked");
-        }
     }
 }
