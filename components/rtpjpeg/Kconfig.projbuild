@@ -3,7 +3,7 @@ menu "RTP/JPEG"
     config RTP_JITBUF_CAP_N_PACKETS
         prompt "RTP jitterbuffer capacity number of packets"
         int
-        default 25
+        default 20
 
     config RTP_JITBUF_CAP_PACKET_SIZE_BYTES
         prompt "RTP jitterbuffer capacity size per packet"
@@ -17,7 +17,7 @@ menu "RTP/JPEG"
         config RTP_JPEG_MAX_DATA_SIZE_BYTES
             prompt "Max allowed JPEG frame size"
             int
-            default 25600
+            default 22528
 
     endmenu
 

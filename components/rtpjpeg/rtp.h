@@ -69,7 +69,7 @@ typedef enum rtp_pt_clockrate {
 } rtp_pt_clockrate;
 
 #ifndef ESP_PLATFORM
-#define CONFIG_RTP_JITBUF_CAP_N_PACKETS (25)
+#define CONFIG_RTP_JITBUF_CAP_N_PACKETS (20)
 #define CONFIG_RTP_JITBUF_CAP_PACKET_SIZE_BYTES (1400)
 #endif
 

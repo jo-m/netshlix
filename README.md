@@ -11,15 +11,13 @@ The roll-your-own minimal [RTP/JPEG stack](components/rtpjpeg) incl. jitterbuffe
 This is an [ESP-IDF 5](https://github.com/espressif/esp-idf) project.
 
 ```bash
-# Configure
-# For now, the WiFi credentials are hardcoded via
-# - CONFIG_SMALLTV_WIFI_SSID
-# - CONFIG_SMALLTV_WIFI_PASSWORD
-idf.py menuconfig
-idf.py save-defconfig
+source $IDF_PATH/export.sh
+
+# Configure:
+cp sdkconfig.defaults.ci sdkconfig.defaults
+# Now, edit WiFi credentials in sdkconfig.defaults
 
 # Build/flash
-source $IDF_PATH/export.sh
 idf.py build flash
 
 # Lint/format
@@ -53,4 +51,3 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 \
 - [ ] OTA updates
 - [ ] Display log buffer
 - [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange
-- [ ] Linting: clang-format, menuconfig format `python -m kconfcheck`

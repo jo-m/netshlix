@@ -79,7 +79,7 @@ esp_err_t parse_rtp_jpeg_qt(const uint8_t *buf, ptrdiff_t sz, rtp_jpeg_qt_t *out
 void rtp_jpeg_qt_print(const rtp_jpeg_qt_t *p);
 
 #ifndef ESP_PLATFORM
-#define CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES (25 * 1024)
+#define CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES (22 * 1024)
 #endif
 
 // A fully assembled RTP/JPEG frame.
