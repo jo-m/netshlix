@@ -73,7 +73,10 @@ esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out) {
     esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = CONFIG_SMALLTV_LCD_RST_PIN,
         .rgb_ele_order = ESP_LCD_COLOR_SPACE_RGB,
+        .data_endian = LCD_RGB_DATA_ENDIAN_LITTLE,
         .bits_per_pixel = SMALLTV_LCD_COLOR_DEPTH_BIT,
+        .flags = {.reset_active_high = 0},
+        .vendor_config = NULL,
     };
     esp_lcd_panel_handle_t panel_handle;
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(io_handle, &panel_config, &panel_handle));
@@ -82,7 +85,7 @@ esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out) {
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
-    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, false));
+    ESP_ERROR_CHECK(esp_lcd_panel_invert_color(panel_handle, true));
     ESP_ERROR_CHECK(esp_lcd_panel_set_gap(panel_handle, 0, 0));
     ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(panel_handle, false));
 
