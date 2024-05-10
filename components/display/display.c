@@ -47,8 +47,6 @@ esp_err_t display_init(esp_lcd_panel_handle_t panel_handle,
     ESP_LOGI(TAG, "Buf size: %u", buf_sz);
     lv_color_t *buf0 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
     assert(buf0);
-    lv_color_t *buf1 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
-    assert(buf1);
 
     ESP_LOGI(TAG, "Initialize LVGL display");
 
@@ -56,7 +54,7 @@ esp_err_t display_init(esp_lcd_panel_handle_t panel_handle,
     assert(disp != NULL);
     lv_display_set_user_data(disp, (void *)panel_handle);
     lv_display_set_flush_cb(disp, lcd_flush_cb);
-    lv_display_set_buffers(disp, buf0, buf1, buf_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, buf0, NULL, buf_sz, LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_color_format(disp, SMALLTV_LCD_COLOR_FORMAT);
 
     // Register IO done callback.
