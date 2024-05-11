@@ -45,7 +45,7 @@ static void setup_backlight_pwm() {
 esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
                    esp_lcd_panel_io_handle_t *panel_io_handle_out) {
     setup_backlight_pwm();
-    backlight_set_brightness(0);
+    lcd_backlight_set_brightness(0);
 
     ESP_LOGI(TAG, "Initialize SPI bus");
     spi_bus_config_t buscfg = {
@@ -94,7 +94,7 @@ esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
     ESP_ERROR_CHECK(esp_lcd_panel_set_gap(panel_handle, 0, 0));
     ESP_ERROR_CHECK(esp_lcd_panel_swap_xy(panel_handle, false));
 
-    backlight_set_brightness(255);
+    lcd_backlight_set_brightness(255);
 
     assert(panel_handle_out != NULL);
     assert(panel_io_handle_out != NULL);
@@ -104,7 +104,7 @@ esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
     return ESP_OK;
 }
 
-esp_err_t backlight_set_brightness(uint8_t duty) {
+esp_err_t lcd_backlight_set_brightness(uint8_t duty) {
     ESP_LOGI(TAG, "Backlight duty cycle: %hhu", duty);
 
     ledc_set_duty(BL_LEDC_MODE, BL_LEDC_CHANNEL, duty);

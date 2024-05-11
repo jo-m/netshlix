@@ -18,4 +18,4 @@
 
 esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
                    esp_lcd_panel_io_handle_t *panel_io_handle_out);
-esp_err_t backlight_set_brightness(uint8_t duty);
+esp_err_t lcd_backlight_set_brightness(uint8_t duty);
