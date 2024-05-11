@@ -18,50 +18,10 @@
 #include "rtp_jpeg.h"
 #include "rtp_udp.h"
 #include "sdkconfig.h"
+#include "smpte_bars.h"
 #include "wifi.h"
 
 static const char *TAG = "main";
-
-static void anim_x_cb(void *var, int32_t v) { lv_obj_set_x(var, v); }
-
-static void anim_size_cb(void *var, int32_t v) { lv_obj_set_size(var, v * 4, v * 4); }
-
-void lvgl_dummy_ui(lv_display_t *disp) {
-    lv_obj_t *scr = lv_display_get_screen_active(disp);
-
-    // Text label
-    lv_obj_t *label = lv_label_create(scr);
-
-    lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-    lv_label_set_text(label, "Hello Espressif, Hello LVGL. This must be a bit longer to scoll.");
-
-    lv_obj_set_width(label, 240);
-    lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 0);
-
-    // Animation
-    lv_obj_t *obj = lv_obj_create(scr);
-    lv_obj_set_style_bg_color(obj, lv_palette_main(LV_PALETTE_RED), 0);
-    lv_obj_set_style_radius(obj, LV_RADIUS_CIRCLE, 0);
-
-    lv_obj_align(obj, LV_ALIGN_LEFT_MID, 10, 0);
-
-    lv_anim_t a;
-    lv_anim_init(&a);
-    lv_anim_set_var(&a, obj);
-    lv_anim_set_values(&a, 10, 40);
-    lv_anim_set_duration(&a, 1000);
-    lv_anim_set_playback_delay(&a, 100);
-    lv_anim_set_playback_duration(&a, 300);
-    lv_anim_set_repeat_delay(&a, 500);
-    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
-
-    lv_anim_set_exec_cb(&a, anim_size_cb);
-    lv_anim_start(&a);
-    lv_anim_set_exec_cb(&a, anim_x_cb);
-    lv_anim_set_values(&a, 10, 240);
-    lv_anim_start(&a);
-}
 
 static void print_free_heap_stack() {
     ESP_LOGI(TAG, "=== Free: 8BIT=%u largest_block=%u heap=%lu stack=%d",
@@ -124,8 +84,9 @@ void app_main(void) {
     assert(disp != NULL);
     print_free_heap_stack();
 
-    ESP_LOGI(TAG, "Display LVGL animation");
-    lvgl_dummy_ui(disp);
+    ESP_LOGI(TAG, "Display SMPTE test image");
+    lv_obj_t *scr = lv_display_get_screen_active(disp);
+    make_smpte_image(scr);
     print_free_heap_stack();
 
     ESP_LOGI(TAG, "Initializing JPEG receive buffer");
