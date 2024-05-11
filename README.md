@@ -12,6 +12,7 @@ This is an [ESP-IDF 5](https://github.com/espressif/esp-idf) project.
 
 ```bash
 source $IDF_PATH/export.sh
+export ESPPORT=/dev/ttyACM0
 
 # Configure:
 cp sdkconfig.defaults.ci sdkconfig.defaults
