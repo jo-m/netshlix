@@ -87,7 +87,7 @@ void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j) {
     j->max_seq_out = -1;
 }
 
-static inline void rtp_jitbuf_logd(rtp_jitbuf_t *j __attribute__((unused))) {
+static inline void rtp_jitbuf_logd(const rtp_jitbuf_t *j __attribute__((unused))) {
 #ifndef NDEBUG
 #if CONFIG_LOG_MAXIMUM_LEVEL >= ESP_LOG_DEBUG
     char buf[CONFIG_RTP_JITBUF_CAP_N_PACKETS * 6 + 1] = {0};
@@ -113,6 +113,7 @@ static inline void rtp_jitbuf_logd(rtp_jitbuf_t *j __attribute__((unused))) {
 
         uint16_t sequence_number = 0;
         uint32_t ssrc = 0;
+        assert(sz > 0);
         const esp_err_t err = partial_parse_rtp_packet(j->buf[i], sz, &sequence_number, &ssrc);
         assert(err == ESP_OK);
 
