@@ -87,44 +87,6 @@ void init_rtp_jitbuf(const uint32_t ssrc, rtp_jitbuf_t *j) {
     j->max_seq_out = -1;
 }
 
-static inline void rtp_jitbuf_logd(const rtp_jitbuf_t *j __attribute__((unused))) {
-#ifndef NDEBUG
-#if CONFIG_LOG_MAXIMUM_LEVEL >= ESP_LOG_DEBUG
-    char buf[CONFIG_RTP_JITBUF_CAP_N_PACKETS * 6 + 1] = {0};
-    char *p = buf;
-
-    for (int i = 0; i < CONFIG_RTP_JITBUF_CAP_N_PACKETS; i++) {
-        if (i == j->buf_top) {
-            p += snprintf(p, (buf + sizeof(buf) - p), "  |   ");
-        } else {
-            p += snprintf(p, (buf + sizeof(buf) - p), "      ");
-        }
-    }
-    ESP_LOGD(TAG, "%s", buf);
-
-    memset(buf, 0, sizeof(buf));
-    p = buf;
-    for (int i = 0; i < CONFIG_RTP_JITBUF_CAP_N_PACKETS; i++) {
-        const ptrdiff_t sz = j->buf_szs[i];
-        if (sz == 0) {
-            p += snprintf(p, (buf + sizeof(buf) - p), "_____ ");
-            continue;
-        }
-
-        uint16_t sequence_number = 0;
-        uint32_t ssrc = 0;
-        assert(sz > 0);
-        const esp_err_t err = partial_parse_rtp_packet(j->buf[i], sz, &sequence_number, &ssrc);
-        assert(err == ESP_OK);
-
-        p += snprintf(p, (buf + sizeof(buf) - p), "%5hu ", sequence_number);
-    }
-
-    ESP_LOGD(TAG, "%s", buf);
-#endif
-#endif
-}
-
 /**
  * Compare two sequence numbers, handling wraparounds.
  * See http://en.wikipedia.org/wiki/Serial_number_arithmetic for why this works.
@@ -154,7 +116,6 @@ esp_err_t rtp_jitbuf_feed(rtp_jitbuf_t *j, const uint8_t *buf, const ptrdiff_t s
     }
 
     ESP_LOGD(TAG, "->jitbuf state max_seq=%hu buf_top=%d", j->max_seq, j->buf_top);
-    rtp_jitbuf_logd(j);
     ESP_LOGD(TAG, "->jitbuf new packet seq=%hu", sequence_number);
 
     // Buffer is empty -> place at start.
@@ -285,7 +246,6 @@ static ptrdiff_t rtp_jitbuf_hand_out_buffer(rtp_jitbuf_t *j, const int pos,
 ptrdiff_t rtp_jitbuf_retrieve(rtp_jitbuf_t *j, uint8_t *buf, const ptrdiff_t sz) {
     ESP_LOGD(TAG, "jitbuf-> state max_seq=%" PRIu16 " buf_top=%d max_seq_out=%" PRId32, j->max_seq,
              j->buf_top, j->max_seq_out);
-    rtp_jitbuf_logd(j);
 
     const int pos = rtp_jitbuf_find_oldest_packet(j);
     if (pos < 0) {
