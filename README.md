@@ -28,8 +28,8 @@ idf.py build flash
 idf.py -p PORT flash monitor
 
 # Send frames
-gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 \
-    ! decodebin \
+gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! decodebin \
+    ! videoconvert ! videoscale ! video/x-raw,width=240,height=240 \
     ! jpegenc \
     ! rtpjpegpay seqnum-offset=63000 mtu=1400 \
     ! udpsink host=10.0.0.134 port=1234

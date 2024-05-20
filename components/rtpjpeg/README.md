@@ -10,12 +10,13 @@ Test video download: https://download.blender.org/peach/bigbuckbunny_movies/BigB
 Stream MJPEG via RTP:
 ```bash
 # Send
-gst-launch-1.0 filesrc location=BigBuckBunny_320x180.mp4 \
-    ! decodebin ! jpegenc ! rtpjpegpay seqnum-offset=63000 mtu=1400 ! udpsink host=127.0.0.1 port=1234
+gst-launch-1.0 filesrc location=BigBuckBunny_320x180.mp4 ! decodebin \
+    ! videoconvert ! videoscale ! video/x-raw,width=240,height=240 \
+    ! jpegenc ! rtpjpegpay seqnum-offset=63000 mtu=1400 ! udpsink host=localhost port=1234
 
 # Receive/play
-gst-launch-1.0 -v udpsrc address=localhost port=1234 \
-    ! application/x-rtp,encoding-name=JPEG,payload=26 ! rtpjpegdepay ! jpegdec ! videoconvert ! videoscale ! autovideosink
+gst-launch-1.0 -v udpsrc address=localhost port=1234 ! application/x-rtp,encoding-name=JPEG,payload=26 \
+    ! rtpjpegdepay ! jpegdec ! videoconvert ! videoscale ! autovideosink
 
 # Dummy receive
 nc -u -l 1234 | pv > /dev/null
