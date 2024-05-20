@@ -72,15 +72,13 @@ void app_main(void) {
     mdns_svr_init();
 
     ESP_LOGI(TAG, "Initialize LCD");
-    esp_lcd_panel_handle_t panel_handle = NULL;
-    esp_lcd_panel_io_handle_t panel_io_handle = NULL;
-    ESP_ERROR_CHECK(lcd_init(&panel_handle, &panel_io_handle));
-    assert(panel_handle != NULL);
+    lcd_t lcd = {0};
+    ESP_ERROR_CHECK(lcd_init(&lcd));
     print_free_heap_stack();
 
     ESP_LOGI(TAG, "Initialize display");
     lv_display_t *disp = NULL;
-    ESP_ERROR_CHECK(display_init(panel_handle, panel_io_handle, &disp));
+    ESP_ERROR_CHECK(display_init(lcd.panel_handle, lcd.panel_io_handle, &disp));
     assert(disp != NULL);
     print_free_heap_stack();
 

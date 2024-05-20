@@ -42,8 +42,7 @@ static void setup_backlight_pwm() {
     ESP_ERROR_CHECK(ledc_update_duty(BL_LEDC_MODE, BL_LEDC_CHANNEL));
 }
 
-esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
-                   esp_lcd_panel_io_handle_t *panel_io_handle_out) {
+esp_err_t lcd_init(lcd_t *lcd_out) {
     setup_backlight_pwm();
     lcd_backlight_set_brightness(0);
 
@@ -73,6 +72,7 @@ esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
     };
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)SMALLTV_LCD_SPI_HOST,
                                              &io_config, &panel_io_handle));
+    assert(panel_io_handle != NULL);
 
     ESP_LOGI(TAG, "Create St7789 LCD panel");
     esp_lcd_panel_dev_config_t panel_config = {
@@ -85,6 +85,7 @@ esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
     };
     esp_lcd_panel_handle_t panel_handle;
     ESP_ERROR_CHECK(esp_lcd_new_panel_st7789(panel_io_handle, &panel_config, &panel_handle));
+    assert(panel_handle != NULL);
 
     ESP_LOGI(TAG, "Initialize LCD panel");
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
@@ -96,10 +97,10 @@ esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
 
     lcd_backlight_set_brightness(255);
 
-    assert(panel_handle_out != NULL);
-    assert(panel_io_handle_out != NULL);
-    *panel_handle_out = panel_handle;
-    *panel_io_handle_out = panel_io_handle;
+    assert(lcd_out != NULL);
+    memset(lcd_out, 0, sizeof(*lcd_out));
+    lcd_out->panel_handle = panel_handle;
+    lcd_out->panel_io_handle = panel_io_handle;
 
     return ESP_OK;
 }

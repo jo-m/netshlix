@@ -16,6 +16,10 @@
 #define SMALLTV_LCD_CMD_BITS 8
 #define SMALLTV_LCD_PARAM_BITS 8
 
-esp_err_t lcd_init(esp_lcd_panel_handle_t *panel_handle_out,
-                   esp_lcd_panel_io_handle_t *panel_io_handle_out);
+typedef struct lcd_t {
+    esp_lcd_panel_handle_t panel_handle;
+    esp_lcd_panel_io_handle_t panel_io_handle;
+} lcd_t;
+
+esp_err_t lcd_init(lcd_t *lcd_out);
 esp_err_t lcd_backlight_set_brightness(uint8_t duty);
