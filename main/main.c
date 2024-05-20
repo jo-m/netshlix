@@ -9,6 +9,7 @@
 #include <math.h>
 #include <nvs_flash.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "display.h"
 #include "dns.h"
@@ -73,12 +74,12 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Initialize LCD");
     lcd_t lcd = {0};
-    ESP_ERROR_CHECK(init_lcd(&lcd));
+    init_lcd(&lcd);
     print_free_heap_stack();
 
     ESP_LOGI(TAG, "Initialize display");
     lv_display_t *disp = NULL;
-    ESP_ERROR_CHECK(init_display(lcd.panel_handle, lcd.panel_io_handle, &disp));
+    init_display(&lcd, &disp);
     assert(disp != NULL);
     print_free_heap_stack();
 

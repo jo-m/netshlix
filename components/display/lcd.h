@@ -1,8 +1,11 @@
 #pragma once
 
-#include <esp_err.h>
 #include <esp_lcd_types.h>
 #include <stdint.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#include <freertos/FreeRTOS.h>
+#pragma GCC diagnostic pop
 
 #include "lvgl.h"
 
@@ -16,10 +19,17 @@
 #define SMALLTV_LCD_CMD_BITS 8
 #define SMALLTV_LCD_PARAM_BITS 8
 
+// All struct members are private to the implementation.
 typedef struct lcd_t {
     esp_lcd_panel_handle_t panel_handle;
     esp_lcd_panel_io_handle_t panel_io_handle;
+
+    SemaphoreHandle_t drawing;
+    StaticSemaphore_t drawing_buf;
 } lcd_t;
 
-esp_err_t init_lcd(lcd_t *lcd_out);
-esp_err_t lcd_backlight_set_brightness(uint8_t duty);
+void init_lcd(lcd_t *lcd_out);
+void lcd_draw_start(lcd_t *lcd, int x_start, int y_start, int x_end, int y_end,
+                    const void *color_data);
+void lcd_draw_wait_finished(lcd_t *lcd);
+void lcd_backlight_set_brightness(uint8_t duty);
