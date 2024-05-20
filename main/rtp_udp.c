@@ -120,11 +120,9 @@ static void jpeg_frame_cb(const rtp_jpeg_frame_t *frame, void *userdata) {
     rtp_udp_t *u = (rtp_udp_t *)userdata;
     assert(u != NULL);
 
-    ESP_LOGI(TAG, "========== FRAME %dx%d %" PRIu32 " ==========", frame->width, frame->height,
-             frame->timestamp);
-
     const int success = xQueueGenericSend(u->out, frame->jpeg_data, 0, queueSEND_TO_BACK);
-    ESP_LOGI(TAG, "Posted to queue success=%d", success);
+    ESP_LOGI(TAG, "Frame %dx%d ts=%" PRIu32 " posted to queue success=%d", frame->width,
+             frame->height, frame->timestamp, success);
 }
 
 size_t rtp_udp_recv_task_approx_stack_sz() {
