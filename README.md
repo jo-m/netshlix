@@ -45,12 +45,9 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 
 - [ ] WiFi setup, SoftAP
 - [ ] Touch sensor
-- [ ] RTP/MJPEG
+- [x] RTP/MJPEG
 - [ ] HTTP API, image upload
 - [ ] Display image from HTTP(s)
 - [ ] SPIFFS/littlefs
-- [ ] Flash encryption
-- [ ] OTA updates
-- [ ] Display log buffer
-- [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange
+- [ ] Show boot status on display, during init
 - [ ] Grep TODO
