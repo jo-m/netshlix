@@ -1,5 +1,6 @@
 #include "jpeg.h"
 
+#include <assert.h>
 #include <esp_err.h>
 #include <esp_log.h>
 
@@ -36,11 +37,51 @@ static size_t jdec_in_func(JDEC *jd, uint8_t *buff, size_t nbyte) {
     return (size_t)sz;
 }
 
-int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
-    ESP_LOGI(TAG, "Image block %ux%u scl=%u t%u l%u b%u r%u", jd->width, jd->height, jd->scale,
-             rect->top, rect->left, rect->bottom, rect->right);
+static uint16_t rgb565_888(uint8_t r, uint8_t g, uint8_t b) {
+    return ((r & 0b11111000) << 8) | ((g & 0b11111100) << 3) | (b >> 3);
+}
+
+typedef struct px888_t {
+    uint8_t b;
+    uint8_t g;
+    uint8_t r;
+} px888_t;
+_Static_assert(sizeof(px888_t) == 3);
+
+static uint16_t buf_RGB565[16 * 16] = {0};
+
+// http://elm-chan.org/fsw/tjpgd/en/output.html
+static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
+    ESP_LOGD(TAG, "Image block %hux%hu scl=%hhu t%hu l%hu b%hu r%hu", jd->width, jd->height,
+             jd->scale, rect->top, rect->left, rect->bottom, rect->right);
+
+    if (jd->width != SMALLTV_LCD_H_RES || jd->height != SMALLTV_LCD_V_RES || jd->scale != 0 ||
+        jd->ncomp != 3 || jd->msx != 2 || jd->msy != 2) {
+        // Abort decoding.
+        ESP_LOGW(TAG, "Aborting decoding");
+        return 0;
+    }
 
     jpeg_decode_input_t *u = (jpeg_decode_input_t *)jd->device;
+    assert(u != NULL);
+
+    const int rect_w_px = rect->right - rect->left + 1, rect_h_px = rect->bottom - rect->top + 1;
+    assert(rect_w_px == 16);
+    assert(rect_h_px == 16);
+
+    // TODO: we actually want RGB565, configure JD_FORMAT accordingly
+    _Static_assert(JD_FORMAT == 0);  // RGB888
+    px888_t *buf_RGB888 = (px888_t *)bitmap;
+    memset(buf_RGB565, 0, sizeof(buf_RGB565));
+    for (int y = 0; y < rect_h_px; y++) {
+        for (int x = 0; x < rect_w_px; x++) {
+            px888_t px = buf_RGB888[y * rect_h_px + x];
+            buf_RGB565[y * rect_h_px + x] = rgb565_888(px.r, px.g, px.b);
+        }
+    }
+
+    lcd_draw_start(u->lcd, rect->left, rect->top, rect->right, rect->bottom, buf_RGB565);
+    lcd_draw_wait_finished(u->lcd);
 
     return 1;
 }
