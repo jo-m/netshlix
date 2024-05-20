@@ -53,3 +53,4 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 - [ ] OTA updates
 - [ ] Display log buffer
 - [ ] Struct rearrangement for size opt https://justine.lol/sizetricks/#arrange
+- [ ] Grep TODO

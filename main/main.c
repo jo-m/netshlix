@@ -1,5 +1,6 @@
 #include <esp_err.h>
 #include <esp_log.h>
+#include <esp_timer.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
@@ -96,6 +97,9 @@ void app_main(void) {
         }
 
         ESP_LOGI(TAG, "Received frame, decode");
+        const int64_t t0 = esp_timer_get_time();
         ESP_ERROR_CHECK(jpeg_decode_to_lcd(decode_in_buf, sizeof(decode_in_buf), &lcd));
+        const int64_t t1 = esp_timer_get_time();
+        ESP_LOGI(TAG, "Decoded frame dt=%lldus", t1 - t0);
     }
 }
