@@ -12,7 +12,7 @@ typedef struct jpeg_decode_input_t {
     const uint8_t *data;
     ptrdiff_t data_max_sz;
     ptrdiff_t read_offset;
-    esp_lcd_panel_handle_t panel_handle;
+    lcd_t *lcd;
 } jpeg_decode_input_t;
 
 static size_t jdec_in_func(JDEC *jd, uint8_t *buff, size_t nbyte) {
@@ -37,18 +37,20 @@ static size_t jdec_in_func(JDEC *jd, uint8_t *buff, size_t nbyte) {
 }
 
 int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
-    ESP_LOGD(TAG, "Image block %u %u %u %u", rect->top, rect->bottom, rect->left, rect->right);
+    ESP_LOGI(TAG, "Image block %ux%u scl=%u t%u l%u b%u r%u", jd->width, jd->height, jd->scale,
+             rect->top, rect->left, rect->bottom, rect->right);
+
+    jpeg_decode_input_t *u = (jpeg_decode_input_t *)jd->device;
 
     return 1;
 }
 
-esp_err_t decode_jpeg(const uint8_t *data, const ptrdiff_t data_max_sz,
-                      esp_lcd_panel_handle_t panel_handle) {
+esp_err_t jpeg_decode_to_lcd(const uint8_t *data, const ptrdiff_t data_max_sz, lcd_t *lcd) {
     jpeg_decode_input_t u = {0};
     u.data = data;
     u.data_max_sz = data_max_sz;
     u.read_offset = 0;
-    u.panel_handle = panel_handle;
+    u.lcd = lcd;
 
     JRESULT res;
     JDEC jdec = {0};

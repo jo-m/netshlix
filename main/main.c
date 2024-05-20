@@ -31,29 +31,8 @@ static void print_free_heap_stack() {
              uxTaskGetStackHighWaterMark(NULL));
 }
 
-// Expects a QueueHandle_t<uint8_t[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES]> as pvParameters argument.
-void decode_jpeg_task(void *pvParameters) {
-    QueueHandle_t in = (QueueHandle_t)pvParameters;
-
-    // Our copy of the frame for the decoder to read from.
-    uint8_t buf[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES] = {0};
-
-    while (true) {
-        memset(buf, 0, sizeof(buf));
-        if (!xQueueReceive(in, &buf, 0)) {
-            ESP_LOGD(TAG, "Received nothing");
-            vTaskDelay(pdMS_TO_TICKS(2));
-            continue;
-        }
-
-        ESP_LOGD(TAG, "Received frame from queue");
-
-        // Now, decode.
-        ESP_ERROR_CHECK(decode_jpeg(buf, sizeof(buf), NULL));  // TODO: panel_handle
-    }
-}
-
-size_t decode_jpeg_task_approx_stack_sz() { return CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES + 100; }
+// Our copy of the frame for the decoder to read from.
+static uint8_t decode_in_buf[CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES] = {0};
 
 void app_main(void) {
     ESP_LOGI(TAG, "app_main()");
@@ -104,19 +83,18 @@ void app_main(void) {
     }
     print_free_heap_stack();
 
-    ESP_LOGI(TAG, "Starting JPEG task");
-    ESP_LOGI(TAG, "Starting task, stack_sz=%u", decode_jpeg_task_approx_stack_sz());
-    const BaseType_t err1 =
-        xTaskCreate(decode_jpeg_task, "decode_jpeg_task", decode_jpeg_task_approx_stack_sz(),
-                    (void *)rtp_out, 5, NULL);
-    if (err1 != pdPASS) {
-        ESP_LOGE(TAG, "Failed to start task: %d", err1);
-        abort();
-    }
-    print_free_heap_stack();
-
     while (1) {
         uint32_t time_till_next_ms = lv_timer_handler();
         vTaskDelay(pdMS_TO_TICKS(time_till_next_ms));
+
+        // Check if received a frame.
+        memset(decode_in_buf, 0, sizeof(decode_in_buf));
+        if (!xQueueReceive(rtp_out, &decode_in_buf, 0)) {
+            ESP_LOGD(TAG, "Received nothing");
+            continue;
+        }
+
+        ESP_LOGI(TAG, "Received frame, decode");
+        ESP_ERROR_CHECK(jpeg_decode_to_lcd(decode_in_buf, sizeof(decode_in_buf), &lcd));
     }
 }
