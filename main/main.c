@@ -56,16 +56,16 @@ void app_main(void) {
     init_lcd(&lcd);
     print_free_heap_stack();
 
-    ESP_LOGI(TAG, "Initialize display");
-    lv_display_t *disp = NULL;
-    init_display(&lcd, &disp);
-    assert(disp != NULL);
-    print_free_heap_stack();
+    // ESP_LOGI(TAG, "Initialize display");
+    // lv_display_t *disp = NULL;
+    // init_display(&lcd, &disp);
+    // assert(disp != NULL);
+    // print_free_heap_stack();
 
-    ESP_LOGI(TAG, "Display SMPTE test image");
-    lv_obj_t *scr = lv_display_get_screen_active(disp);
-    make_smpte_image(scr);
-    print_free_heap_stack();
+    // ESP_LOGI(TAG, "Display SMPTE test image");
+    // lv_obj_t *scr = lv_display_get_screen_active(disp);
+    // make_smpte_image(scr);
+    // print_free_heap_stack();
 
     ESP_LOGI(TAG, "Initializing JPEG receive buffer");
     QueueHandle_t rtp_out = xQueueCreate(1, CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES);
@@ -84,8 +84,9 @@ void app_main(void) {
     print_free_heap_stack();
 
     while (1) {
-        uint32_t time_till_next_ms = lv_timer_handler();
-        vTaskDelay(pdMS_TO_TICKS(time_till_next_ms));
+        // uint32_t time_till_next_ms = lv_timer_handler();
+        // vTaskDelay(pdMS_TO_TICKS(time_till_next_ms));
+        vTaskDelay(pdMS_TO_TICKS(10));
 
         // Check if received a frame.
         memset(decode_in_buf, 0, sizeof(decode_in_buf));
