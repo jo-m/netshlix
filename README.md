@@ -37,8 +37,9 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 \
 
 ## C Conventions
 
-- Names: buf, sz, out
-- Sizes: ptrdiff_t
+- Names: `buf`, `sz`, `out`
+- Sizes: `ptrdiff_t`
+- Objects: `typedef struct X_t {} X_t`, `init_X(..., X_t *out)`, `X_do(X_t *x, ...)`, `X_destroy(X_t *x)`
 
 ## Ideas, TODOs
 

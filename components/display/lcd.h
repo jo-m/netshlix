@@ -21,5 +21,5 @@ typedef struct lcd_t {
     esp_lcd_panel_io_handle_t panel_io_handle;
 } lcd_t;
 
-esp_err_t lcd_init(lcd_t *lcd_out);
+esp_err_t init_lcd(lcd_t *lcd_out);
 esp_err_t lcd_backlight_set_brightness(uint8_t duty);

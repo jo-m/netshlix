@@ -42,7 +42,7 @@ static void setup_backlight_pwm() {
     ESP_ERROR_CHECK(ledc_update_duty(BL_LEDC_MODE, BL_LEDC_CHANNEL));
 }
 
-esp_err_t lcd_init(lcd_t *lcd_out) {
+esp_err_t init_lcd(lcd_t *lcd_out) {
     setup_backlight_pwm();
     lcd_backlight_set_brightness(0);
 

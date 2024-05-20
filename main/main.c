@@ -73,12 +73,12 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Initialize LCD");
     lcd_t lcd = {0};
-    ESP_ERROR_CHECK(lcd_init(&lcd));
+    ESP_ERROR_CHECK(init_lcd(&lcd));
     print_free_heap_stack();
 
     ESP_LOGI(TAG, "Initialize display");
     lv_display_t *disp = NULL;
-    ESP_ERROR_CHECK(display_init(lcd.panel_handle, lcd.panel_io_handle, &disp));
+    ESP_ERROR_CHECK(init_display(lcd.panel_handle, lcd.panel_io_handle, &disp));
     assert(disp != NULL);
     print_free_heap_stack();
 
