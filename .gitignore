@@ -7,3 +7,7 @@
 
 # ignore for now because it contains WiFi secrets
 /sdkconfig.defaults
+
+/.direnv
+
+/.cache/
