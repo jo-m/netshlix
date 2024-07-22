@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1719296730,
-        "narHash": "sha256-vsVMXSOZpQK1iaQj3gCBQ6isLX4w7bco8rWVqXKDtww=",
+        "lastModified": 1720529900,
+        "narHash": "sha256-cs/EX+tG7yCdTIQItXCIOcUEDbm1AGHacDygS7VJUys=",
         "owner": "Lindboard",
         "repo": "nixpkgs-esp-dev",
-        "rev": "31ada76b5aa9c5fb7781a327dac74b731ed48521",
+        "rev": "112c9d10b9e171bacf68b91ee63606ab6f9a4529",
         "type": "github"
       },
       "original": {
@@ -72,11 +72,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1720110830,
-        "narHash": "sha256-E5dN9GDV4LwMEduhBLSkyEz51zM17XkWZ3/9luvNOPs=",
+        "lastModified": 1721548954,
+        "narHash": "sha256-7cCC8+Tdq1+3OPyc3+gVo9dzUNkNIQfwSDJ2HSi2u3o=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c0d0be00d4ecc4b51d2d6948e37466194c1e6c51",
+        "rev": "63d37ccd2d178d54e7fb691d7ec76000740ea24a",
         "type": "github"
       },
       "original": {
