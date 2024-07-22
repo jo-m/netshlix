@@ -30,6 +30,8 @@
         buildInputs = with pkgs; [
           esp-idf-esp32
         ];
+
+        packages = [pkgs.clang-tools_18];
       };
     });
 }
