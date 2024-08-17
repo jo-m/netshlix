@@ -54,7 +54,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-void wifi_init_sta(void) {
+void init_wifi_sta(void) {
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_netif_init());
@@ -107,7 +107,7 @@ void wifi_init_sta(void) {
     }
 }
 
-void wifi_init(void) {
+void init_wifi(void) {
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    wifi_init_sta();
+    init_wifi_sta();
 }

@@ -46,10 +46,10 @@ void app_main(void) {
     ESP_ERROR_CHECK(ret);
 
     ESP_LOGI(TAG, "Initialize WIFI");
-    wifi_init();
+    init_wifi();
 
     ESP_LOGI(TAG, "Initialize mDNS");
-    mdns_svr_init();
+    init_mdns_svr();
 
     ESP_LOGI(TAG, "Initialize LCD");
     lcd_t lcd = {0};
@@ -64,7 +64,7 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Display SMPTE test image");
     lv_obj_t *scr = lv_display_get_screen_active(disp);
-    make_smpte_image(scr);
+    init_smpte_image(scr);
     print_free_heap_stack();
 
     ESP_LOGI(TAG, "Initializing JPEG receive buffer");

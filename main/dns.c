@@ -17,7 +17,7 @@ static char *generate_hostname(void) {
     return hostname;
 }
 
-void mdns_svr_init() {
+void init_mdns_svr() {
     char *hostname = generate_hostname();
 
     // initialize mDNS
