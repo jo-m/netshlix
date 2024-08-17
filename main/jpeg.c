@@ -13,35 +13,27 @@
 
 static const char *TAG = "jpgdec";
 
-typedef struct jpeg_decode_input_t {
-    const uint8_t *data;
-    ptrdiff_t data_max_sz;
-    ptrdiff_t read_offset;
-    lcd_t *lcd;
-
-    // Buffer a chunk of display_w_px * block_sz_px of pixels before writing to the display.
-    uint16_t *px_buf;
-    ptrdiff_t px_buf_sz;
-} jpeg_decode_input_t;
+const ptrdiff_t TJPGD_WORK_SZ = 3500;  // TODO: how low can we go?
 
 static size_t jdec_in_func(JDEC *jd, uint8_t *buff, size_t nbyte) {
-    jpeg_decode_input_t *u = (jpeg_decode_input_t *)jd->device;
+    jpeg_decoder_t *d = (jpeg_decoder_t *)jd->device;
+    assert(d != NULL);
 
-    const ptrdiff_t avail = u->data_max_sz - u->read_offset;
+    const ptrdiff_t avail = d->data_max_sz - d->read_offset;
     if (avail <= 0) {
         return 0;
     }
 
     if (buff == NULL) {
-        u->read_offset += nbyte;
+        d->read_offset += nbyte;
         return nbyte;
     }
 
     const ptrdiff_t sz = (ptrdiff_t)nbyte > avail ? avail : (ptrdiff_t)nbyte;
     assert(sz > 0);
-    assert(u->read_offset + sz <= u->data_max_sz);
-    memcpy(buff, u->data + u->read_offset, sz);
-    u->read_offset += sz;
+    assert(d->read_offset + sz <= d->data_max_sz);
+    memcpy(buff, d->data + d->read_offset, sz);
+    d->read_offset += sz;
     return (size_t)sz;
 }
 
@@ -71,7 +63,7 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
     }
 
     // Copy pixels, converting from RGB888 to RGB565.
-    jpeg_decode_input_t *u = (jpeg_decode_input_t *)jd->device;
+    jpeg_decoder_t *u = (jpeg_decoder_t *)jd->device;
     assert(u != NULL);
     px888_t *decoded_rgb888 = (px888_t *)bitmap;
     for (int y = 0; y < BLOCK_SZ_PX; y++) {
@@ -94,48 +86,65 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
     return 1;
 }
 
-esp_err_t jpeg_decode_to_lcd(const uint8_t *data, const ptrdiff_t data_max_sz, lcd_t *lcd) {
-    jpeg_decode_input_t u = {0};
-    u.data = data;
-    u.data_max_sz = data_max_sz;
-    u.read_offset = 0;
-    u.lcd = lcd;
-    u.px_buf_sz = BLOCK_SZ_PX * SMALLTV_LCD_H_RES * sizeof(*u.px_buf);
-    u.px_buf = malloc(u.px_buf_sz);  // TODO: preallocate.
-    if (u.px_buf == NULL) {
-        ESP_LOGW(TAG, "failed alloc %d", u.px_buf_sz);
+esp_err_t init_jpeg_decoder(const ptrdiff_t data_max_sz, lcd_t *lcd, jpeg_decoder_t *out) {
+    assert(lcd != NULL);
+    assert(out != NULL);
+    assert(data_max_sz > 0);
+    memset(out, 0, sizeof(*out));
+
+    out->data_max_sz = data_max_sz;
+    out->read_offset = 0;
+    out->lcd = lcd;
+
+    out->px_buf_sz = BLOCK_SZ_PX * SMALLTV_LCD_H_RES * sizeof(*out->px_buf);
+    out->px_buf = malloc(out->px_buf_sz);
+    if (out->px_buf == NULL) {
+        ESP_LOGW(TAG, "failed alloc of px_buf sz=%d", out->px_buf_sz);
         return ESP_ERR_NO_MEM;
     }
 
-    JRESULT res;
-    JDEC jdec = {0};
-    const ptrdiff_t work_sz = 3500;  // TODO: how low can we go?
-    void *work = malloc(work_sz);    // TODO: preallocate.
-    if (work == NULL) {
-        free(u.px_buf);
-        ESP_LOGW(TAG, "failed alloc %d", work_sz);
+    out->work = malloc(TJPGD_WORK_SZ);
+    if (out->work == NULL) {
+        ESP_LOGW(TAG, "failed alloc of work arena sz=%d", TJPGD_WORK_SZ);
+        free(out->px_buf);
         return ESP_ERR_NO_MEM;
     }
 
-    res = jd_prepare(&jdec, jdec_in_func, work, work_sz, (void *)&u);
+    return ESP_OK;
+}
+
+esp_err_t jpeg_decoder_decode_to_lcd(jpeg_decoder_t *d, const uint8_t *data) {
+    assert(d != NULL);
+    assert(data != NULL);
+
+    assert(d->data_max_sz > 0);
+    d->data = data;
+    d->read_offset = 0;
+
+    memset(d->px_buf, 0, d->px_buf_sz);
+    memset(d->work, 0, TJPGD_WORK_SZ);
+
+    JDEC jdec = {0};  // TODO: move to persistent state
+    JRESULT res = jd_prepare(&jdec, jdec_in_func, d->work, TJPGD_WORK_SZ, (void *)d);
     if (res != JDR_OK) {
         ESP_LOGE(TAG, "Error: jd_prepare() -> %d", res);
-        free(u.px_buf);
-        free(work);
         return ESP_ERR_NOT_FINISHED;
     }
+
     res = jd_decomp(&jdec, jdec_out_func, 0);
     if (res != JDR_OK) {
         ESP_LOGE(TAG, "Error: jd_decomp() -> %d", res);
-        free(u.px_buf);
-        free(work);
         return ESP_ERR_NOT_FINISHED;
     }
-
-    free(u.px_buf);
-    free(work);
 
     ESP_LOGD(TAG, "Finished decoding");
 
     return ESP_OK;
+}
+
+void jpeg_decoder_destroy(jpeg_decoder_t *d) {
+    assert(d != NULL);
+    free(d->px_buf);
+    free(d->work);
+    memset(d, 0, sizeof(*d));
 }
