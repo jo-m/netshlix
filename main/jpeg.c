@@ -103,10 +103,18 @@ esp_err_t init_jpeg_decoder(const ptrdiff_t data_max_sz, lcd_t *lcd, jpeg_decode
         return ESP_ERR_NO_MEM;
     }
 
+    out->jdec = malloc(sizeof(*(out->jdec)));
+    if (out->jdec == NULL) {
+        ESP_LOGW(TAG, "failed alloc of js sz=%u", sizeof(*(out->jdec)));
+        free(out->px_buf);
+        return ESP_ERR_NO_MEM;
+    }
+
     out->work = malloc(TJPGD_WORK_SZ);
     if (out->work == NULL) {
         ESP_LOGW(TAG, "failed alloc of work arena sz=%d", TJPGD_WORK_SZ);
         free(out->px_buf);
+        free(out->jdec);
         return ESP_ERR_NO_MEM;
     }
 
@@ -124,14 +132,13 @@ esp_err_t jpeg_decoder_decode_to_lcd(jpeg_decoder_t *d, const uint8_t *data) {
     memset(d->px_buf, 0, d->px_buf_sz);
     memset(d->work, 0, TJPGD_WORK_SZ);
 
-    JDEC jdec = {0};  // TODO: move to persistent state
-    JRESULT res = jd_prepare(&jdec, jdec_in_func, d->work, TJPGD_WORK_SZ, (void *)d);
+    JRESULT res = jd_prepare(d->jdec, jdec_in_func, d->work, TJPGD_WORK_SZ, (void *)d);
     if (res != JDR_OK) {
         ESP_LOGE(TAG, "Error: jd_prepare() -> %d", res);
         return ESP_ERR_NOT_FINISHED;
     }
 
-    res = jd_decomp(&jdec, jdec_out_func, 0);
+    res = jd_decomp(d->jdec, jdec_out_func, 0);
     if (res != JDR_OK) {
         ESP_LOGE(TAG, "Error: jd_decomp() -> %d", res);
         return ESP_ERR_NOT_FINISHED;

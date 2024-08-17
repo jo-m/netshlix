@@ -16,8 +16,9 @@ typedef struct jpeg_decoder_t {
     uint16_t *px_buf;
     ptrdiff_t px_buf_sz;
 
-    // Working memory for tjpgd.
+    // tjpgd state.
     void *work;
+    struct JDEC *jdec;
 } jpeg_decoder_t;
 
 esp_err_t init_jpeg_decoder(const ptrdiff_t data_max_sz, lcd_t *lcd, jpeg_decoder_t *out);
