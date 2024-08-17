@@ -7,7 +7,6 @@
 #include <freertos/FreeRTOS.h>
 #pragma GCC diagnostic pop
 #include <freertos/task.h>
-#include <math.h>
 #include <nvs_flash.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,14 +15,14 @@
 #include "dns.h"
 #include "jpeg.h"
 #include "lcd.h"
-#include "lvgl.h"
-#include "rtp_jpeg.h"
 #include "rtp_udp.h"
 #include "sdkconfig.h"
 #include "smpte_bars.h"
 #include "wifi.h"
 
 static const char *TAG = "main";
+
+static const int64_t frame_timeout_us = 500 * 1000;
 
 static void print_free_heap_stack() {
     ESP_LOGI(TAG, "=== Free: 8BIT=%u largest_block=%u heap=%lu stack=%d",
@@ -84,21 +83,38 @@ void app_main(void) {
     }
     print_free_heap_stack();
 
+    // Main loop.
+    int64_t last_frame_recv_us = 0;
+    bool reset_screen = false;
     while (1) {
-        uint32_t time_till_next_ms = lv_timer_handler();
-        vTaskDelay(pdMS_TO_TICKS(time_till_next_ms));
+        // If last frame was received too long ago, show test image via LVGL.
+        const int64_t now_us = esp_timer_get_time();
+        const int64_t last_frame_ago_us = now_us - last_frame_recv_us;
+        if (last_frame_ago_us > frame_timeout_us) {
+            if (reset_screen) {
+                lv_obj_invalidate(scr);
+                reset_screen = false;
+            }
+            uint32_t time_till_next_ms = lv_timer_handler();
+            vTaskDelay(pdMS_TO_TICKS(time_till_next_ms));
+        }
 
-        // Check if received a frame.
+        // Continue if no frame received.
         memset(decode_in_buf, 0, sizeof(decode_in_buf));
         if (!xQueueReceive(rtp_out, &decode_in_buf, 0)) {
             ESP_LOGD(TAG, "Received nothing");
             continue;
         }
 
+        // Display frame and update `last_frame_recv_us`.
         ESP_LOGI(TAG, "Received frame, decode");
-        const int64_t t0 = esp_timer_get_time();
-        ESP_ERROR_CHECK(jpeg_decode_to_lcd(decode_in_buf, sizeof(decode_in_buf), &lcd));
+        last_frame_recv_us = esp_timer_get_time();
+        reset_screen = true;
+        const esp_err_t err = jpeg_decode_to_lcd(decode_in_buf, sizeof(decode_in_buf), &lcd);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "Decoding frame failed: %s (%d)", esp_err_to_name(err), err);
+        }
         const int64_t t1 = esp_timer_get_time();
-        ESP_LOGI(TAG, "Decoded frame dt=%lldus", t1 - t0);
+        ESP_LOGI(TAG, "Decoded frame dt=%lldus", t1 - last_frame_recv_us);
     }
 }
