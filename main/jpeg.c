@@ -108,7 +108,7 @@ esp_err_t jpeg_decode_to_lcd(const uint8_t *data, const ptrdiff_t data_max_sz, l
 
     JRESULT res;
     JDEC jdec = {0};
-    const size_t work_sz = 3500;
+    const ptrdiff_t work_sz = 3500;
     void *work = malloc(work_sz);
     if (work == NULL) {
         free(u.px_buf);

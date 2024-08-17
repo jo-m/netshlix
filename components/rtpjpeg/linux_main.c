@@ -61,7 +61,7 @@ int main() {
         // Receive packet.
         addr_size = sizeof client_addr;
         memset(buf, 0, sizeof(buf));
-        const size_t sz =
+        const ptrdiff_t sz =
             recvfrom(sockfd, buf, MAX_BUFFER, 0, (struct sockaddr *)&client_addr, &addr_size);
         ESP_LOGI(TAG, "Received %ld bytes on port %d from %s", sz, client_addr.sin_port,
                  inet_ntoa(client_addr.sin_addr));

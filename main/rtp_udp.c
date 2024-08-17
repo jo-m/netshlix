@@ -125,7 +125,7 @@ static void jpeg_frame_cb(const rtp_jpeg_frame_t *frame, void *userdata) {
              frame->height, frame->timestamp, success);
 }
 
-size_t rtp_udp_recv_task_approx_stack_sz() {
+ptrdiff_t rtp_udp_recv_task_approx_stack_sz() {
     return sizeof(rtp_udp_t) + sizeof(rtp_jpeg_session_t) + sizeof(rtp_jitbuf_t) + 3 * 1024;
 }
 

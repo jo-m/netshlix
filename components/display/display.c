@@ -5,6 +5,7 @@
 #include <esp_heap_caps.h>
 #include <esp_log.h>
 #include <esp_timer.h>
+#include <stddef.h>
 
 #include "lcd.h"
 
@@ -34,7 +35,8 @@ void init_display(lcd_t *lcd, lv_display_t **disp_out) {
     lv_tick_set_cb(lcd_lvgl_tick_get_cb);
 
     ESP_LOGI(TAG, "Allocate display buffer(s)");
-    const size_t buf_sz = SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE / 6;
+    const ptrdiff_t buf_sz =
+        SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE / 6;
     _Static_assert(buf_sz <= CONFIG_SMALLTV_LCD_MAX_TRANSFER_LINES * SMALLTV_LCD_H_RES *
                                  SMALLTV_LCD_COLOR_DEPTH_BYTE,
                    "Should be <= buscfg.max_transfer_sz");
