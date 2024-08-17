@@ -16,9 +16,11 @@ This is an [ESP-IDF 5](https://github.com/espressif/esp-idf) project.
 source $IDF_PATH/export.sh
 export ESPPORT=/dev/ttyACM0
 
-# Configure:
+# Configuration
 cp sdkconfig.defaults.ci sdkconfig.defaults
-# Now, edit WiFi credentials in sdkconfig.defaults
+# Now, change default config (e.g. WiFi credentials):
+idf.py menuconfig
+idf.py save-defconfig
 
 # Build/flash
 idf.py build flash
