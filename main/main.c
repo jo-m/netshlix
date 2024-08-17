@@ -22,7 +22,7 @@
 
 static const char *TAG = "main";
 
-static const int64_t frame_timeout_us = 500 * 1000;
+static const int64_t FRAME_TIMEOUT_US = 500 * 1000;
 
 static void print_free_heap_stack() {
     ESP_LOGI(TAG, "=== Free: 8BIT=%u largest_block=%u heap=%lu stack=%d",
@@ -94,7 +94,7 @@ void app_main(void) {
         // If last frame was received too long ago, show test image via LVGL.
         const int64_t now_us = esp_timer_get_time();
         const int64_t last_frame_ago_us = now_us - last_frame_recv_us;
-        if (last_frame_ago_us > frame_timeout_us) {
+        if (last_frame_ago_us > FRAME_TIMEOUT_US) {
             if (reset_screen) {
                 lv_obj_invalidate(scr);
                 reset_screen = false;
