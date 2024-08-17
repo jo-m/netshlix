@@ -6,7 +6,6 @@
 #pragma GCC diagnostic pop
 #include <stddef.h>
 
-#include "rtp_jpeg.h"
 #include "sdkconfig.h"
 
 #if !CONFIG_LWIP_NETBUF_RECVINFO

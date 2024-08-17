@@ -11,6 +11,7 @@
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_vendor.h>
 #include <esp_log.h>
+#include <lvgl.h>
 #include <stdbool.h>
 #include <string.h>
 

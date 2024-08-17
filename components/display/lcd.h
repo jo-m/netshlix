@@ -7,8 +7,6 @@
 #include <freertos/FreeRTOS.h>
 #pragma GCC diagnostic pop
 
-#include "lvgl.h"
-
 #define SMALLTV_LCD_H_RES 240
 #define SMALLTV_LCD_V_RES 240
 #define SMALLTV_LCD_COLOR_FORMAT LV_COLOR_FORMAT_RGB565

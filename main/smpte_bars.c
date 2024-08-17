@@ -4,7 +4,6 @@
 #include <esp_heap_caps.h>
 
 #include "lcd.h"
-#include "lvgl.h"
 
 static void make_rect(lv_obj_t *scr, int32_t w, int32_t h, int32_t x, int32_t y, lv_color_t color) {
     lv_obj_t *rect = lv_obj_create(scr);

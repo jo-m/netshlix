@@ -3,7 +3,6 @@
 #include <esp_log.h>
 #include <esp_mac.h>
 #include <mdns.h>
-#include <string.h>
 
 static const char *TAG = "mdns";
 
