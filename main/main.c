@@ -111,10 +111,11 @@ void app_main(void) {
         last_frame_recv_us = esp_timer_get_time();
         reset_screen = true;
         const esp_err_t err = jpeg_decode_to_lcd(decode_in_buf, sizeof(decode_in_buf), &lcd);
-        if (err != ESP_OK) {
+        if (err == ESP_OK) {
+            const int64_t t1 = esp_timer_get_time();
+            ESP_LOGI(TAG, "Decoded frame dt=%lldus", t1 - last_frame_recv_us);
+        } else {
             ESP_LOGW(TAG, "Decoding frame failed: %s (%d)", esp_err_to_name(err), err);
         }
-        const int64_t t1 = esp_timer_get_time();
-        ESP_LOGI(TAG, "Decoded frame dt=%lldus", t1 - last_frame_recv_us);
     }
 }
