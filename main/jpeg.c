@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <esp_err.h>
 #include <esp_log.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "../managed_components/lvgl__lvgl/src/libs/tjpgd/tjpgd.h"  // Hacky hack - we use lvgl's vendored tjpgd directly.
@@ -100,18 +101,19 @@ esp_err_t jpeg_decode_to_lcd(const uint8_t *data, const ptrdiff_t data_max_sz, l
     u.read_offset = 0;
     u.lcd = lcd;
     u.px_buf_sz = BLOCK_SZ_PX * SMALLTV_LCD_H_RES * sizeof(*u.px_buf);
-    u.px_buf =
-        malloc(u.px_buf_sz);  // TODO: perhaps persist some state to avoid repeating malloc().
+    u.px_buf = malloc(u.px_buf_sz);  // TODO: preallocate.
     if (u.px_buf == NULL) {
+        ESP_LOGW(TAG, "failed alloc %d", u.px_buf_sz);
         return ESP_ERR_NO_MEM;
     }
 
     JRESULT res;
     JDEC jdec = {0};
-    const ptrdiff_t work_sz = 3500;
-    void *work = malloc(work_sz);
+    const ptrdiff_t work_sz = 3500;  // TODO: how low can we go?
+    void *work = malloc(work_sz);    // TODO: preallocate.
     if (work == NULL) {
         free(u.px_buf);
+        ESP_LOGW(TAG, "failed alloc %d", work_sz);
         return ESP_ERR_NO_MEM;
     }
 
@@ -124,7 +126,7 @@ esp_err_t jpeg_decode_to_lcd(const uint8_t *data, const ptrdiff_t data_max_sz, l
     }
     res = jd_decomp(&jdec, jdec_out_func, 0);
     if (res != JDR_OK) {
-        ESP_LOGE(TAG, "Error: jd_prepare() -> %d", res);
+        ESP_LOGE(TAG, "Error: jd_decomp() -> %d", res);
         free(u.px_buf);
         free(work);
         return ESP_ERR_NOT_FINISHED;
