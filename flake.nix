@@ -3,9 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-    # FIXME: Temporary https://github.com/mirrexagon/nixpkgs-esp-dev/pull/56.
-    # Reset to "github:mirrexagon/nixpkgs-esp-dev" when merged.
-    esp-dev.url = "github:Lindboard/nixpkgs-esp-dev";
+    esp-dev.url = "github:mirrexagon/nixpkgs-esp-dev";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
