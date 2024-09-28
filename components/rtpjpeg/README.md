@@ -87,7 +87,7 @@ make clean linux_fuzztarget_pcap
 # FUZZ!!
 echo core >/proc/sys/kernel/core_pattern
 export AFL_SKIP_CPUFREQ=1
-afl-fuzz -i seeds/ -o fuzz_out/ -- ./linux_fuzztarget_pcap  '@@'
+afl-fuzz -i seeds/ -o fuzz_out/ -- ./linux_fuzztarget_pcap '@@'
 
 # Run Wireshark.
 sudo ip netns exec s1 wireshark
