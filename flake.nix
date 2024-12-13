@@ -2,7 +2,7 @@
   description = "Nix flake for esp32-idf";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     esp-dev.url = "github:mirrexagon/nixpkgs-esp-dev";
     flake-utils.url = "github:numtide/flake-utils";
   };
