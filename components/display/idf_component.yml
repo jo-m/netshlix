@@ -1,9 +1,2 @@
 dependencies:
-  # TODO:
-  # To include the fix for https://github.com/lvgl/lvgl/issues/6038,
-  # we temporarily pull lvgl from its upstream repo directly.
-  # As soon as lvgl 9.2 is released, this can be replaced again with `lvgl/lvgl: "^9.2.0"`.
-  # Then, also remove `-DLV_USE_TJPGD` from CMakeLists.txt.
-  lvgl/lvgl:
-    version: b16aa3c558cc0aee2c02b1d043da9ae81597a194
-    git: https://github.com/lvgl/lvgl
+  lvgl/lvgl: "^9.2.0"
