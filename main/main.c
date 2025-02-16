@@ -45,12 +45,6 @@ void app_main(void) {
     }
     ESP_ERROR_CHECK(ret);
 
-    ESP_LOGI(TAG, "Initialize WIFI");
-    init_wifi();
-
-    ESP_LOGI(TAG, "Initialize mDNS");
-    init_mdns_svr();
-
     ESP_LOGI(TAG, "Initialize LCD");
     lcd_t lcd = {0};
     init_lcd(&lcd);
@@ -66,6 +60,13 @@ void app_main(void) {
     lv_obj_t *scr = lv_display_get_screen_active(disp);
     init_smpte_image(scr);
     print_free_heap_stack();
+    lv_timer_handler();
+
+    ESP_LOGI(TAG, "Initialize WIFI");
+    init_wifi();
+
+    ESP_LOGI(TAG, "Initialize mDNS");
+    init_mdns_svr();
 
     ESP_LOGI(TAG, "Initializing JPEG receive buffer");
     QueueHandle_t rtp_out = xQueueCreate(1, CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES);
