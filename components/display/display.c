@@ -36,7 +36,7 @@ void init_display(lcd_t *lcd, lv_display_t **disp_out) {
 
     ESP_LOGI(TAG, "Allocate display buffer(s)");
     const ptrdiff_t buf_sz =
-        SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE / 6;
+        SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE / 15;
     _Static_assert(buf_sz <= CONFIG_SMALLTV_LCD_MAX_TRANSFER_LINES * SMALLTV_LCD_H_RES *
                                  SMALLTV_LCD_COLOR_DEPTH_BYTE,
                    "Should be <= buscfg.max_transfer_sz");
