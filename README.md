@@ -29,7 +29,8 @@ idf.py build flash
 ./format.sh
 
 # Flash and monitor
-idf.py -p $ESPPORT flash monitor
+idf.py -p $ESPPORT build flash monitor
+idf.py -p $ESPPORT monitor
 
 # Send frames
 gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! decodebin \
