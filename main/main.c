@@ -45,34 +45,37 @@ void app_main(void) {
     }
     ESP_ERROR_CHECK(ret);
 
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize LCD");
     lcd_t lcd = {0};
     init_lcd(&lcd);
-    print_free_heap_stack();
 
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize display");
     lv_display_t *disp = NULL;
     init_display(&lcd, &disp);
     assert(disp != NULL);
-    print_free_heap_stack();
 
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Display SMPTE test image");
     lv_obj_t *scr = lv_display_get_screen_active(disp);
     init_smpte_image(scr);
-    print_free_heap_stack();
     lv_timer_handler();
 
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize WIFI");
     init_wifi();
 
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize mDNS");
     init_mdns_svr();
 
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Initializing JPEG receive buffer");
     QueueHandle_t rtp_out = xQueueCreate(1, CONFIG_RTP_JPEG_MAX_DATA_SIZE_BYTES);
     assert(rtp_out != NULL);
-    print_free_heap_stack();
 
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Starting UDP server");
     ESP_LOGI(TAG, "Starting task, stack_sz=%u", rtp_udp_recv_task_approx_stack_sz());
     const BaseType_t err0 = xTaskCreatePinnedToCore(rtp_udp_recv_task, "rtp_udp_recv_task",
@@ -83,12 +86,13 @@ void app_main(void) {
         abort();
     }
 
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Initializing JPEG decoder");
     jpeg_decoder_t jpeg_dec = {0};
     ESP_ERROR_CHECK(init_jpeg_decoder(sizeof(decode_in_buf), &lcd, &jpeg_dec));
-    print_free_heap_stack();
 
     // Main loop.
+    print_free_heap_stack();
     int64_t last_frame_recv_us = 0;
     bool reset_screen = false;
     while (1) {
