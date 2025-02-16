@@ -60,6 +60,7 @@ void app_main(void) {
     ESP_LOGI(TAG, "Display SMPTE test image");
     lv_obj_t *scr = lv_display_get_screen_active(disp);
     init_smpte_image(scr);
+    smpte_image_set_text("Initializing...");
     lv_timer_handler();
 
     print_free_heap_stack();
@@ -93,6 +94,7 @@ void app_main(void) {
 
     // Main loop.
     print_free_heap_stack();
+    smpte_image_set_text("No stream available       ");
     int64_t last_frame_recv_us = 0;
     bool reset_screen = false;
     while (1) {

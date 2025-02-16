@@ -47,6 +47,8 @@ static void anim_cb(void *var, int32_t v __attribute__((unused))) {
     lv_obj_invalidate(canvas);
 }
 
+lv_obj_t *text_label = {0};
+
 void init_smpte_image(lv_obj_t *scr) {
     _Static_assert(SMALLTV_LCD_H_RES == 240);
     _Static_assert(SMALLTV_LCD_V_RES == 240);
@@ -73,6 +75,18 @@ void init_smpte_image(lv_obj_t *scr) {
     init_rect(scr, 40, 60, 40 * 3, 180, lv_color_hex(0x000000));
     init_rect(scr, 20, 60, 40 * 4, 180, lv_color_hex(0x131313));
 
+    // Text
+    init_rect(scr, 160, 30, 40, 100, lv_color_hex(0x000000));
+    text_label = lv_label_create(scr);
+    lv_label_set_long_mode(text_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_size(text_label, 160, 30);
+    lv_obj_set_pos(text_label, 40, 105);
+    lv_obj_set_style_text_align(text_label, LV_TEXT_ALIGN_CENTER, 0);
+    static lv_style_t style;
+    lv_style_init(&style);
+    lv_style_set_text_font(&style, &lv_font_montserrat_20);
+    lv_obj_add_style(text_label, &style, 0);
+
     // Static noise canvas.
     uint16_t *canvas_buf = heap_caps_malloc(canvas_buf_sz, MALLOC_CAP_8BIT);
     assert(canvas_buf != NULL);
@@ -91,3 +105,5 @@ void init_smpte_image(lv_obj_t *scr) {
     lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
     lv_anim_start(&a);
 }
+
+void smpte_image_set_text(const char *text) { lv_label_set_text(text_label, text); }
