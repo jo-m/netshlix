@@ -104,9 +104,8 @@ void app_main(void) {
             vTaskDelay(pdMS_TO_TICKS(time_till_next_ms));
         }
 
-        // Continue if no frame received.
-        memset(decode_in_buf, 0, sizeof(decode_in_buf));
-        if (!xQueueReceive(rtp_out, &decode_in_buf, 0)) {
+        // Wait some ticks for a frame, continue if none.
+        if (!xQueueReceive(rtp_out, &decode_in_buf, pdMS_TO_TICKS(10))) {
             ESP_LOGD(TAG, "Received nothing");
             continue;
         }
