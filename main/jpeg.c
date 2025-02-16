@@ -13,7 +13,7 @@
 
 static const char *TAG = "jpgdec";
 
-const ptrdiff_t TJPGD_WORK_SZ = 3500;  // TODO: how low can we go?
+const ptrdiff_t TJPGD_WORK_SZ = 3584;
 
 static size_t jdec_in_func(JDEC *jd, uint8_t *buff, size_t nbyte) {
     jpeg_decoder_t *d = (jpeg_decoder_t *)jd->device;
