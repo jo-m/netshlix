@@ -109,7 +109,7 @@ void app_main(void) {
         }
 
         // Wait some ticks for a frame, continue if none.
-        if (!xQueueReceive(rtp_out, &decode_in_buf, pdMS_TO_TICKS(10))) {
+        if (!xQueueReceive(rtp_out, &decode_in_buf, pdMS_TO_TICKS(5))) {
             ESP_LOGD(TAG, "Received nothing");
             continue;
         }
