@@ -83,9 +83,9 @@ void app_main(void) {
     print_free_heap_stack();
     ESP_LOGI(TAG, "Starting UDP server");
     ESP_LOGI(TAG, "Starting task, stack_sz=%u", rtp_udp_recv_task_approx_stack_sz());
-    const BaseType_t err0 = xTaskCreatePinnedToCore(rtp_udp_recv_task, "rtp_udp_recv_task",
-                                                    rtp_udp_recv_task_approx_stack_sz(),
-                                                    (void *)rtp_out, 5, NULL, tskNO_AFFINITY);
+    const BaseType_t err0 =
+        xTaskCreatePinnedToCore(rtp_udp_recv_task, "rtp_udp_recv_task",
+                                rtp_udp_recv_task_approx_stack_sz(), (void *)rtp_out, 5, NULL, 1);
     if (err0 != pdPASS) {
         ESP_LOGE(TAG, "Failed to start task: %d", err0);
         abort();
@@ -109,7 +109,7 @@ void app_main(void) {
         }
 
         // Wait some ticks for a frame, continue if none.
-        if (!xQueueReceive(rtp_out, &decode_in_buf, pdMS_TO_TICKS(5))) {
+        if (!xQueueReceive(rtp_out, &decode_in_buf, pdMS_TO_TICKS(100))) {
             ESP_LOGD(TAG, "Received nothing");
             continue;
         }
