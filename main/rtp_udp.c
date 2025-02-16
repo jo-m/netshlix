@@ -2,6 +2,8 @@
 
 #include <string.h>
 #include <sys/param.h>
+
+#include "esp_err.h"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #include <freertos/FreeRTOS.h>
@@ -188,8 +190,9 @@ void rtp_udp_recv_task(void *pvParameters) {
                 }
 
                 ESP_LOGD(TAG, "Feed to JPEG session");
-                if (rtp_jpeg_session_feed(&sess, &packet) != ESP_OK) {
-                    ESP_LOGD(TAG, "Failed to feed RTP packet to jpeg_session");
+                esp_err_t err3 = rtp_jpeg_session_feed(&sess, &packet);
+                if (err3 != ESP_OK) {
+                    ESP_LOGI(TAG, "Failed to feed RTP packet to jpeg_session %d", err3);
                     continue;
                 }
             }
