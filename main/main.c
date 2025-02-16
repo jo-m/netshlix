@@ -75,9 +75,9 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Starting UDP server");
     ESP_LOGI(TAG, "Starting task, stack_sz=%u", rtp_udp_recv_task_approx_stack_sz());
-    const BaseType_t err0 =
-        xTaskCreate(rtp_udp_recv_task, "rtp_udp_recv_task", rtp_udp_recv_task_approx_stack_sz(),
-                    (void *)rtp_out, 5, NULL);
+    const BaseType_t err0 = xTaskCreatePinnedToCore(rtp_udp_recv_task, "rtp_udp_recv_task",
+                                                    rtp_udp_recv_task_approx_stack_sz(),
+                                                    (void *)rtp_out, 5, NULL, tskNO_AFFINITY);
     if (err0 != pdPASS) {
         ESP_LOGE(TAG, "Failed to start task: %d", err0);
         abort();
