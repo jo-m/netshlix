@@ -76,6 +76,11 @@ void app_main(void) {
     assert(rtp_out != NULL);
 
     print_free_heap_stack();
+    ESP_LOGI(TAG, "Initializing JPEG decoder");
+    jpeg_decoder_t jpeg_dec = {0};
+    ESP_ERROR_CHECK(init_jpeg_decoder(sizeof(decode_in_buf), &lcd, &jpeg_dec));
+
+    print_free_heap_stack();
     ESP_LOGI(TAG, "Starting UDP server");
     ESP_LOGI(TAG, "Starting task, stack_sz=%u", rtp_udp_recv_task_approx_stack_sz());
     const BaseType_t err0 = xTaskCreatePinnedToCore(rtp_udp_recv_task, "rtp_udp_recv_task",
@@ -85,11 +90,6 @@ void app_main(void) {
         ESP_LOGE(TAG, "Failed to start task: %d", err0);
         abort();
     }
-
-    print_free_heap_stack();
-    ESP_LOGI(TAG, "Initializing JPEG decoder");
-    jpeg_decoder_t jpeg_dec = {0};
-    ESP_ERROR_CHECK(init_jpeg_decoder(sizeof(decode_in_buf), &lcd, &jpeg_dec));
 
     // Main loop.
     print_free_heap_stack();
