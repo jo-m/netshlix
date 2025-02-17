@@ -5,7 +5,7 @@
 /sdkconfig.old
 *.projbuild.new
 
-# ignore for now because it contains WiFi secrets
+# Contains WiFi secrets
 /sdkconfig.defaults
 
 /.direnv
