@@ -38,6 +38,13 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
     ! jpegenc \
     ! rtpjpegpay seqnum-offset=63000 mtu=1400 \
     ! udpsink host=10.0.0.134 port=1234
+
+# With rate limiting:
+gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! decodebin \
+    ! videorate ! "video/x-raw,framerate=10/1" ! videoconvert ! videoscale ! video/x-raw,width=240,height=240 \
+    ! jpegenc \
+    ! rtpjpegpay seqnum-offset=63000 mtu=1400 \
+    ! udpsink host=10.0.0.134 port=1234
 ```
 
 ## C Conventions
@@ -54,3 +61,5 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 - [ ] Show boot status on display, during init
 - [ ] https://github.com/jo-m/smalltv-pro-esp-idf/commit/23212276520ee479daa317cb9b5c4690f3b7e0db
 - [ ] Grep TODO
+- [ ] Get rid of JPEG decoding tearing
+- [ ] MAYBE reduce CONFIG_ESP_MAIN_TASK_STACK_SIZE to 3072
