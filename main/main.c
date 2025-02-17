@@ -77,20 +77,19 @@ void app_main(void) {
     assert(rtp_out != NULL);
 
     print_free_heap_stack();
-    ESP_LOGI(TAG, "Initializing JPEG decoder");
-    jpeg_decoder_t jpeg_dec = {0};
-    ESP_ERROR_CHECK(init_jpeg_decoder(sizeof(decode_in_buf), &lcd, &jpeg_dec));
-
-    print_free_heap_stack();
-    ESP_LOGI(TAG, "Starting UDP server");
-    ESP_LOGI(TAG, "Starting task, stack_sz=%u", rtp_udp_recv_task_approx_stack_sz());
+    ESP_LOGI(TAG, "Starting UDP server task, stack_sz=%u", rtp_udp_recv_task_approx_stack_sz());
     const BaseType_t err0 =
-        xTaskCreatePinnedToCore(rtp_udp_recv_task, "rtp_udp_recv_task",
-                                rtp_udp_recv_task_approx_stack_sz(), (void *)rtp_out, 5, NULL, 1);
+        xTaskCreate(rtp_udp_recv_task, "rtp_udp_recv_task", rtp_udp_recv_task_approx_stack_sz(),
+                    (void *)rtp_out, 5, NULL);
     if (err0 != pdPASS) {
         ESP_LOGE(TAG, "Failed to start task: %d", err0);
         abort();
     }
+
+    print_free_heap_stack();
+    ESP_LOGI(TAG, "Initializing JPEG decoder");
+    jpeg_decoder_t jpeg_dec = {0};
+    ESP_ERROR_CHECK(init_jpeg_decoder(sizeof(decode_in_buf), &lcd, &jpeg_dec));
 
     // Main loop.
     print_free_heap_stack();
@@ -111,7 +110,7 @@ void app_main(void) {
         }
 
         // Wait some ticks for a frame, continue if none.
-        if (!xQueueReceive(rtp_out, &decode_in_buf, pdMS_TO_TICKS(100))) {
+        if (!xQueueReceive(rtp_out, &decode_in_buf, 1)) {
             ESP_LOGD(TAG, "Received nothing");
             continue;
         }
