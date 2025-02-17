@@ -25,7 +25,7 @@
 
 static const char *TAG = "rtp_udp";
 
-_Static_assert(CONFIG_RTP_JITBUF_CAP_PACKET_SIZE_BYTES == CONFIG_SMALLTV_UDP_MTU_BYTES,
+_Static_assert(CONFIG_RTP_JITBUF_CAP_PACKET_SIZE_BYTES == CONFIG_SMALLTV_UDP_PAYLOAD_BYTES,
                "Jitterbuffer packet size should be equal to UDP MTU!");
 
 typedef struct rtp_udp_t {
@@ -34,7 +34,7 @@ typedef struct rtp_udp_t {
     int sock;
     struct sockaddr_storage source_addr;
 
-    char rx_buf[CONFIG_SMALLTV_UDP_MTU_BYTES];
+    char rx_buf[CONFIG_SMALLTV_UDP_PAYLOAD_BYTES];
     ptrdiff_t rx_sz;
     struct iovec iov;
     struct msghdr msg;

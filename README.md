@@ -32,7 +32,7 @@ idf.py build flash
 idf.py -p $ESPPORT build flash monitor
 idf.py -p $ESPPORT monitor
 
-# Send frames
+# Send frames (`mtu` here means UDP payload size, not actual MTU).
 gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! decodebin \
     ! videoconvert ! videoscale ! video/x-raw,width=240,height=240 \
     ! jpegenc \

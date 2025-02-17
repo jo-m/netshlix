@@ -6,11 +6,11 @@ menu "RTP/JPEG"
         default 20
 
     config RTP_JITBUF_CAP_PACKET_SIZE_BYTES
-        prompt "RTP jitterbuffer capacity size per packet"
+        prompt "RTP jitterbuffer capacity size per RTP packet"
         int
         default 1400
         help
-            Should be equal to expected UDP MTU.
+            Should be equal to expected RTP packet/UDP payload size (gst rtpjpegpay mtu).
 
     menu "JPEG"
 

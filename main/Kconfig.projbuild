@@ -46,12 +46,12 @@ menu "Smalltv Main App Configuration"
             help
                 Local UDP port the RTP server will listen on.
 
-        config SMALLTV_UDP_MTU_BYTES
-            int "UDP MTU Bytes"
+        config SMALLTV_UDP_PAYLOAD_BYTES
+            int "UDP payload Bytes"
             range 1 65535
             default 1400
             help
-                MTU to assume for UDP packets, will be used to set receive buffer size.
+                Payload size to assume for UDP packets (= MTU - all headers), will be used to set receive buffer size.
 
         config SMALLTV_UDP_RECV_TIMEOUT_S
             int "Receive timeout seconds"
