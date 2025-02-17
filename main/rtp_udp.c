@@ -154,6 +154,7 @@ void rtp_udp_recv_task(void *pvParameters) {
         while (1) {
             const esp_err_t err2 = sock_receive(&u);
             if (err2 != ESP_OK) {
+                ESP_LOGW(TAG, "sock_receive() failed: %d", err2);
                 break;
             }
 
