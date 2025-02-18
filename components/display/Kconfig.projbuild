@@ -10,7 +10,7 @@ menu "Smalltv LCD"
         config SMALLTV_LCD_PX_CLK_MHZ
             prompt "Pixel clock MHz"
             int
-            default 40
+            default 60
 
         config SMALLTV_LCD_SPI_MOSI_PIN
             prompt "LCD MOSI pin (GPIO)"

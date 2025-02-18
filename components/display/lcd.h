@@ -26,7 +26,7 @@ typedef struct lcd_t {
     StaticSemaphore_t drawing_buf;
 } lcd_t;
 
-void init_lcd(lcd_t *lcd_out);
+void init_lcd(lcd_t *lcd_out, const ptrdiff_t px_buf_sz);
 void lcd_draw_start(lcd_t *lcd, int x_start, int y_start, int x_end, int y_end,
                     const void *color_data);
 void lcd_draw_wait_finished(lcd_t *lcd);

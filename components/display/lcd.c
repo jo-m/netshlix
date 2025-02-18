@@ -59,7 +59,7 @@ static bool io_done_cb(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_io_even
     return true;  // TODO: not sure about this.
 }
 
-void init_lcd(lcd_t *lcd_out) {
+void init_lcd(lcd_t *lcd_out, const ptrdiff_t px_buf_sz) {
     setup_backlight_pwm();
     lcd_backlight_set_brightness(0);
 
@@ -70,7 +70,7 @@ void init_lcd(lcd_t *lcd_out) {
         .miso_io_num = -1,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-        // TODO: maybe set .max_transfer_sz?
+        .max_transfer_sz = px_buf_sz,
         .flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS,
     };
     ESP_ERROR_CHECK(spi_bus_initialize(SMALLTV_LCD_SPI_HOST, &buscfg, SPI_DMA_CH_AUTO));

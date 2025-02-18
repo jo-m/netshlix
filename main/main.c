@@ -50,16 +50,14 @@ void app_main(void) {
 
     print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize LCD");
-    lcd_t lcd = {0};
-    init_lcd(&lcd);
-
     const ptrdiff_t px_buf_sz = lvgl_display_get_buf_sz();
-    ESP_LOGI(TAG, "Allocating lvgl display buffer %db", px_buf_sz);
-    uint8_t *px_buf = heap_caps_malloc(px_buf_sz, MALLOC_CAP_DMA);
-    assert(px_buf);
+    lcd_t lcd = {0};
+    init_lcd(&lcd, px_buf_sz);
 
     print_free_heap_stack();
-    ESP_LOGI(TAG, "Initialize display");
+    ESP_LOGI(TAG, "Initialize LVGL");
+    uint8_t *px_buf = heap_caps_malloc(px_buf_sz, MALLOC_CAP_DMA);
+    assert(px_buf);
     lv_display_t *disp = NULL;
     init_lvgl_display(&lcd, px_buf, px_buf_sz, &disp);
     assert(disp != NULL);
