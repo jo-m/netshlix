@@ -54,7 +54,7 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
     ESP_LOGD(TAG, "Image block %hux%hu scl=%hhu t%hu l%hu b%hu r%hu", jd->width, jd->height,
              jd->scale, rect->top, rect->left, rect->bottom, rect->right);
 
-    if (jd->width != SMALLTV_LCD_H_RES || jd->height != SMALLTV_LCD_V_RES || jd->scale != 0 ||
+    if (jd->width != SMALLTV_LCD_X_RES || jd->height != SMALLTV_LCD_Y_RES || jd->scale != 0 ||
         jd->ncomp != 3 || jd->msx * 8 != BLOCK_SZ_PX || jd->msy * 8 != BLOCK_SZ_PX ||
         (rect->right - rect->left + 1) != BLOCK_SZ_PX ||
         (rect->bottom - rect->top + 1) != BLOCK_SZ_PX) {
@@ -69,14 +69,14 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
     for (int y = 0; y < BLOCK_SZ_PX; y++) {
         for (int x = 0; x < BLOCK_SZ_PX; x++) {
             const px888_t px = decoded_rgb888[y * BLOCK_SZ_PX + x];
-            const int ix = y * (SMALLTV_LCD_H_RES) + (x + (int)rect->left);
+            const int ix = y * (SMALLTV_LCD_X_RES) + (x + (int)rect->left);
             u->px_buf[ix] = rgb565(px);
         }
     }
 
     // Write?
-    if (rect->right + 1 == SMALLTV_LCD_H_RES) {
-        const int x_start = 0, y_start = rect->top, x_end = SMALLTV_LCD_H_RES - 1,
+    if (rect->right + 1 == SMALLTV_LCD_X_RES) {
+        const int x_start = 0, y_start = rect->top, x_end = SMALLTV_LCD_X_RES - 1,
                   y_end = rect->bottom;
         ESP_LOGD(TAG, "lcd_draw_start() x=[%d %d] y=[%d %d]", x_start, x_end, y_start, y_end);
         lcd_draw_start(u->lcd, x_start, y_start, x_end, y_end, u->px_buf);
@@ -96,7 +96,7 @@ esp_err_t init_jpeg_decoder(const ptrdiff_t data_max_sz, lcd_t *lcd, jpeg_decode
     out->read_offset = 0;
     out->lcd = lcd;
 
-    out->px_buf_sz = BLOCK_SZ_PX * SMALLTV_LCD_H_RES * sizeof(*out->px_buf);
+    out->px_buf_sz = BLOCK_SZ_PX * SMALLTV_LCD_X_RES * sizeof(*out->px_buf);
     out->px_buf = malloc(out->px_buf_sz);
     if (out->px_buf == NULL) {
         ESP_LOGW(TAG, "failed alloc of px_buf sz=%d", out->px_buf_sz);

@@ -50,8 +50,8 @@ static void anim_cb(void *var, int32_t v __attribute__((unused))) {
 lv_obj_t *text_label = {0};
 
 void init_smpte_image(lv_obj_t *scr) {
-    _Static_assert(SMALLTV_LCD_H_RES == 240);
-    _Static_assert(SMALLTV_LCD_V_RES == 240);
+    _Static_assert(SMALLTV_LCD_X_RES == 240);
+    _Static_assert(SMALLTV_LCD_Y_RES == 240);
 
     init_rect(scr, 34, 160, 34 * 0, 0, lv_color_hex(0xffffff));
     init_rect(scr, 34, 160, 34 * 1, 0, lv_color_hex(0xffff00));
