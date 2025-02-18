@@ -29,13 +29,7 @@ static void lcd_wait_cb(lv_display_t *disp) {
 
 static uint32_t lcd_lvgl_tick_get_cb() { return esp_timer_get_time() / 1000; }
 
-void init_lvgl_display(lcd_t *lcd, lv_display_t **disp_out, uint8_t **buf_out,
-                       ptrdiff_t *buf_sz_out) {
-    ESP_LOGI(TAG, "Initialize LVGL library");
-    lv_init();
-    lv_tick_set_cb(lcd_lvgl_tick_get_cb);
-
-    ESP_LOGI(TAG, "Allocate lvgl display buffer(s)");
+ptrdiff_t lvgl_display_get_buf_sz() {
     const ptrdiff_t buf_sz = SMALLTV_LCD_X_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE * 24;
     _Static_assert(
         (SMALLTV_LCD_X_RES * SMALLTV_LCD_Y_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE) % buf_sz == 0,
@@ -43,12 +37,19 @@ void init_lvgl_display(lcd_t *lcd, lv_display_t **disp_out, uint8_t **buf_out,
     _Static_assert(
         (buf_sz * 10) >= (SMALLTV_LCD_X_RES * SMALLTV_LCD_Y_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE),
         "LVGL recommends display buffer size to be at least 1/10 of display.");
-    ESP_LOGI(TAG, "Buf size: %u", buf_sz);
-    lv_color_t *buf = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
-    assert(buf);
+    return buf_sz;
+}
+
+void init_lvgl_display(lcd_t *lcd, uint8_t *buf, ptrdiff_t buf_sz, lv_display_t **disp_out) {
+    assert(lcd != NULL);
+    assert(buf != NULL);
+    assert(buf_sz == lvgl_display_get_buf_sz());
+
+    ESP_LOGI(TAG, "Initialize LVGL library");
+    lv_init();
+    lv_tick_set_cb(lcd_lvgl_tick_get_cb);
 
     ESP_LOGI(TAG, "Initialize LVGL display");
-
     lv_display_t *disp = lv_display_create(SMALLTV_LCD_X_RES, SMALLTV_LCD_Y_RES);
     assert(disp != NULL);
     lv_display_set_user_data(disp, (void *)lcd);
@@ -59,10 +60,4 @@ void init_lvgl_display(lcd_t *lcd, lv_display_t **disp_out, uint8_t **buf_out,
 
     assert(disp_out != NULL);
     *disp_out = disp;
-    if (buf_out != NULL) {
-        *buf_out = (uint8_t *)buf;
-    }
-    if (buf_sz_out != NULL) {
-        *buf_sz_out = buf_sz;
-    }
 }

@@ -2,6 +2,8 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_timer.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
@@ -51,12 +53,15 @@ void app_main(void) {
     lcd_t lcd = {0};
     init_lcd(&lcd);
 
+    const ptrdiff_t px_buf_sz = lvgl_display_get_buf_sz();
+    ESP_LOGI(TAG, "Allocating lvgl display buffer %db", px_buf_sz);
+    uint8_t *px_buf = heap_caps_malloc(px_buf_sz, MALLOC_CAP_DMA);
+    assert(px_buf);
+
     print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize display");
     lv_display_t *disp = NULL;
-    uint8_t *px_buf = 0;
-    ptrdiff_t px_buf_sz = 0;
-    init_lvgl_display(&lcd, &disp, &px_buf, &px_buf_sz);
+    init_lvgl_display(&lcd, px_buf, px_buf_sz, &disp);
     assert(disp != NULL);
     assert(px_buf != NULL);
     assert(px_buf_sz > 0);

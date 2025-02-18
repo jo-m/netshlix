@@ -3,7 +3,9 @@
 #include "lcd.h"
 #include "lvgl.h"
 
-// If buf_out and buf_sz_out are non-NULL, also returns the pixel buffer allocated for LVGL (with
-// DMA capabilities), so that it can be reused for different purposes when LVGL is not using it.
-void init_lvgl_display(lcd_t *lcd, lv_display_t **disp_out, uint8_t **buf_out,
-                       ptrdiff_t *buf_sz_out);
+// Returns the desired size of the screen buffer to pass to init_lvgl_display().
+ptrdiff_t lvgl_display_get_buf_sz();
+
+// Buffer `buf` must be of size `buf_sz` == `lvgl_display_get_buf_sz()`,
+// and must be allocated with `MALLOC_CAP_DMA`.
+void init_lvgl_display(lcd_t *lcd, uint8_t *buf, ptrdiff_t buf_sz, lv_display_t **disp_out);
