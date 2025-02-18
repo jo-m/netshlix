@@ -70,7 +70,7 @@ void app_main(void) {
     ESP_LOGI(TAG, "Display SMPTE test image");
     lv_obj_t *scr = lv_display_get_screen_active(disp);
     init_smpte_image(scr);
-    smpte_image_set_text("Initializing...");
+    smpte_image_set_text("Connecting...");
     lv_timer_handler();
 
     print_free_heap_stack();

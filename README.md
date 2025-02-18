@@ -58,8 +58,9 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 - [ ] WiFi setup, SoftAP
 - [ ] Touch sensor
 - [x] RTP/MJPEG
-- [ ] Show boot status on display, during init
 - [ ] https://github.com/jo-m/smalltv-pro-esp-idf/commit/23212276520ee479daa317cb9b5c4690f3b7e0db
 - [ ] Grep TODO
-- [ ] Get rid of JPEG decoding tearing
 - [ ] MAYBE reduce CONFIG_ESP_MAIN_TASK_STACK_SIZE to 3072
+- [ ] Increase frame and jitter buffers again
+- [ ] Show IP address WiFi status
+- [ ] Honor RTP timestamps
