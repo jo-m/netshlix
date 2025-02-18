@@ -11,10 +11,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "display.h"
 #include "dns.h"
 #include "jpeg.h"
 #include "lcd.h"
+#include "lvgl_display.h"
 #include "rtp_udp.h"
 #include "sdkconfig.h"
 #include "smpte_bars.h"
@@ -53,7 +53,7 @@ void app_main(void) {
     print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize display");
     lv_display_t *disp = NULL;
-    init_display(&lcd, &disp);
+    init_lvgl_display(&lcd, &disp);
     assert(disp != NULL);
 
     print_free_heap_stack();

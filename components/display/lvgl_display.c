@@ -1,4 +1,4 @@
-#include "display.h"
+#include "lvgl_display.h"
 
 #include <assert.h>
 #include <esp_err.h>
@@ -29,7 +29,7 @@ static void lcd_wait_cb(lv_display_t *disp) {
 
 static uint32_t lcd_lvgl_tick_get_cb() { return esp_timer_get_time() / 1000; }
 
-void init_display(lcd_t *lcd, lv_display_t **disp_out) {
+void init_lvgl_display(lcd_t *lcd, lv_display_t **disp_out) {
     ESP_LOGI(TAG, "Initialize LVGL library");
     lv_init();
     lv_tick_set_cb(lcd_lvgl_tick_get_cb);

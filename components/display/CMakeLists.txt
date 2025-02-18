@@ -1,4 +1,4 @@
-idf_component_register(SRCS "display.c" "lcd.c"
+idf_component_register(SRCS "lvgl_display.c" "lcd.c"
                        INCLUDE_DIRS "."
                        REQUIRES esp_lcd)
 
