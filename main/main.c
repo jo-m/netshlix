@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_timer.h>
@@ -53,8 +54,12 @@ void app_main(void) {
     print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize display");
     lv_display_t *disp = NULL;
-    init_lvgl_display(&lcd, &disp);
+    uint8_t *px_buf = 0;
+    ptrdiff_t px_buf_sz = 0;
+    init_lvgl_display(&lcd, &disp, &px_buf, &px_buf_sz);
     assert(disp != NULL);
+    assert(px_buf != NULL);
+    assert(px_buf_sz > 0);
 
     print_free_heap_stack();
     ESP_LOGI(TAG, "Display SMPTE test image");
@@ -89,7 +94,7 @@ void app_main(void) {
     print_free_heap_stack();
     ESP_LOGI(TAG, "Initializing JPEG decoder");
     jpeg_decoder_t jpeg_dec = {0};
-    ESP_ERROR_CHECK(init_jpeg_decoder(&lcd, &jpeg_dec));
+    ESP_ERROR_CHECK(init_jpeg_decoder(&lcd, px_buf, px_buf_sz, &jpeg_dec));
 
     // Main loop.
     print_free_heap_stack();

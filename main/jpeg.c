@@ -9,6 +9,7 @@
 #include "../managed_components/lvgl__lvgl/src/libs/tjpgd/tjpgd.h"  // Hacky hack - we use lvgl's vendored tjpgd directly.
 #include "lcd.h"
 
+// This is the decoding block size of tjpgd.
 #define BLOCK_SZ_PX 16
 
 static const char *TAG = "jpgdec";
@@ -87,20 +88,20 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
     return 1;
 }
 
-esp_err_t init_jpeg_decoder(lcd_t *lcd, jpeg_decoder_t *out) {
+esp_err_t init_jpeg_decoder(lcd_t *lcd, uint8_t *px_buf, ptrdiff_t px_buf_sz, jpeg_decoder_t *out) {
     assert(lcd != NULL);
+    assert(px_buf != NULL);
+    assert(px_buf_sz > 0);
     assert(out != NULL);
     memset(out, 0, sizeof(*out));
 
     out->read_offset = 0;
     out->lcd = lcd;
 
-    out->px_buf_sz = BLOCK_SZ_PX * SMALLTV_LCD_X_RES * sizeof(*out->px_buf);
-    out->px_buf = heap_caps_malloc(out->px_buf_sz, MALLOC_CAP_DMA);
-    if (out->px_buf == NULL) {
-        ESP_LOGW(TAG, "failed alloc of px_buf sz=%d", out->px_buf_sz);
-        return ESP_ERR_NO_MEM;
-    }
+    // We use only a strip of one block height of this buffer anyways.
+    assert(px_buf_sz >= (SMALLTV_LCD_X_RES * BLOCK_SZ_PX * SMALLTV_LCD_COLOR_DEPTH_BYTE));
+    out->px_buf = (uint16_t *)px_buf;
+    out->px_buf_sz = px_buf_sz;
 
     out->jdec = malloc(sizeof(*(out->jdec)));
     if (out->jdec == NULL) {
@@ -152,7 +153,6 @@ esp_err_t jpeg_decoder_decode_to_lcd(jpeg_decoder_t *d, const uint8_t *data,
 
 void jpeg_decoder_destroy(jpeg_decoder_t *d) {
     assert(d != NULL);
-    free(d->px_buf);
     free(d->work);
     memset(d, 0, sizeof(*d));
 }
