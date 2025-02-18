@@ -34,12 +34,14 @@ void init_display(lcd_t *lcd, lv_display_t **disp_out) {
     lv_init();
     lv_tick_set_cb(lcd_lvgl_tick_get_cb);
 
-    ESP_LOGI(TAG, "Allocate display buffer(s)");
-    const ptrdiff_t buf_sz =
-        SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE / 15;
-    _Static_assert(buf_sz <= CONFIG_SMALLTV_LCD_MAX_TRANSFER_LINES * SMALLTV_LCD_H_RES *
-                                 SMALLTV_LCD_COLOR_DEPTH_BYTE,
-                   "Should be <= buscfg.max_transfer_sz");
+    ESP_LOGI(TAG, "Allocate lvgl display buffer(s)");
+    const ptrdiff_t buf_sz = SMALLTV_LCD_H_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE * 16;
+    _Static_assert(
+        (SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE) % buf_sz == 0,
+        "Screen size should be divisible by LVGL screen buffer size");
+    _Static_assert(
+        (buf_sz * 15) >= (SMALLTV_LCD_H_RES * SMALLTV_LCD_V_RES * SMALLTV_LCD_COLOR_DEPTH_BYTE),
+        "LVGL recommends display buffer size to be at least 1/10 of display.. but we allow  15.");
     ESP_LOGI(TAG, "Buf size: %u", buf_sz);
     lv_color_t *buf0 = heap_caps_malloc(buf_sz, MALLOC_CAP_DMA);
     assert(buf0);

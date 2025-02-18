@@ -70,8 +70,7 @@ void init_lcd(lcd_t *lcd_out) {
         .miso_io_num = -1,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-        .max_transfer_sz = CONFIG_SMALLTV_LCD_MAX_TRANSFER_LINES * SMALLTV_LCD_H_RES *
-                           SMALLTV_LCD_COLOR_DEPTH_BYTE,
+        // TODO: maybe set .max_transfer_sz?
         .flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS,
     };
     ESP_ERROR_CHECK(spi_bus_initialize(SMALLTV_LCD_SPI_HOST, &buscfg, SPI_DMA_CH_AUTO));

@@ -7,13 +7,6 @@ menu "Smalltv LCD"
 
     menu "SPI"
 
-        config SMALLTV_LCD_MAX_TRANSFER_LINES
-            prompt "How many pixel lines to transfer via SPI max at once"
-            int
-            default 80
-            help
-                SMALLTV_LCD_V_RES should be a multiple of this.
-
         config SMALLTV_LCD_PX_CLK_MHZ
             prompt "Pixel clock MHz"
             int
