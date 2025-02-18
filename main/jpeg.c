@@ -83,6 +83,9 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
                  y_end);
         lcd_draw_start(u->lcd, x_start, y_start, x_end, y_end, u->px_buf);
         lcd_draw_wait_finished(u->lcd);
+
+        // TODO: hack to make tearing go away.
+        vTaskDelay(pdMS_TO_TICKS(2));
     }
 
     return 1;
