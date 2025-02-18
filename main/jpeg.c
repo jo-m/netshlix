@@ -98,7 +98,7 @@ esp_err_t init_jpeg_decoder(const ptrdiff_t data_max_sz, lcd_t *lcd, jpeg_decode
     out->lcd = lcd;
 
     out->px_buf_sz = BLOCK_SZ_PX * SMALLTV_LCD_X_RES * sizeof(*out->px_buf);
-    out->px_buf = malloc(out->px_buf_sz);
+    out->px_buf = heap_caps_malloc(out->px_buf_sz, MALLOC_CAP_DMA);
     if (out->px_buf == NULL) {
         ESP_LOGW(TAG, "failed alloc of px_buf sz=%d", out->px_buf_sz);
         return ESP_ERR_NO_MEM;
