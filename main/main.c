@@ -89,7 +89,7 @@ void app_main(void) {
     print_free_heap_stack();
     ESP_LOGI(TAG, "Initializing JPEG decoder");
     jpeg_decoder_t jpeg_dec = {0};
-    ESP_ERROR_CHECK(init_jpeg_decoder(sizeof(decode_in_buf), &lcd, &jpeg_dec));
+    ESP_ERROR_CHECK(init_jpeg_decoder(&lcd, &jpeg_dec));
 
     // Main loop.
     print_free_heap_stack();
@@ -119,7 +119,8 @@ void app_main(void) {
         ESP_LOGI(TAG, "Received frame, decode");
         last_frame_recv_us = esp_timer_get_time();
         reset_screen = true;
-        const esp_err_t err = jpeg_decoder_decode_to_lcd(&jpeg_dec, decode_in_buf);
+        const esp_err_t err =
+            jpeg_decoder_decode_to_lcd(&jpeg_dec, decode_in_buf, sizeof(decode_in_buf));
         if (err == ESP_OK) {
             const int64_t t1 = esp_timer_get_time();
             ESP_LOGI(TAG, "Decoded frame dt=%lldus", t1 - last_frame_recv_us);

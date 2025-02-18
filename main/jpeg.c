@@ -87,13 +87,11 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
     return 1;
 }
 
-esp_err_t init_jpeg_decoder(const ptrdiff_t data_max_sz, lcd_t *lcd, jpeg_decoder_t *out) {
+esp_err_t init_jpeg_decoder(lcd_t *lcd, jpeg_decoder_t *out) {
     assert(lcd != NULL);
     assert(out != NULL);
-    assert(data_max_sz > 0);
     memset(out, 0, sizeof(*out));
 
-    out->data_max_sz = data_max_sz;
     out->read_offset = 0;
     out->lcd = lcd;
 
@@ -122,12 +120,14 @@ esp_err_t init_jpeg_decoder(const ptrdiff_t data_max_sz, lcd_t *lcd, jpeg_decode
     return ESP_OK;
 }
 
-esp_err_t jpeg_decoder_decode_to_lcd(jpeg_decoder_t *d, const uint8_t *data) {
+esp_err_t jpeg_decoder_decode_to_lcd(jpeg_decoder_t *d, const uint8_t *data,
+                                     const ptrdiff_t data_max_sz) {
     assert(d != NULL);
     assert(data != NULL);
+    assert(data_max_sz > 0);
 
-    assert(d->data_max_sz > 0);
     d->data = data;
+    d->data_max_sz = data_max_sz;
     d->read_offset = 0;
 
     memset(d->px_buf, 0, d->px_buf_sz);
