@@ -78,7 +78,8 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
     if (rect->right + 1 == SMALLTV_LCD_X_RES) {
         const int x_start = 0, y_start = rect->top, x_end = SMALLTV_LCD_X_RES - 1,
                   y_end = rect->bottom;
-        ESP_LOGD(TAG, "lcd_draw_start() x=[%d %d] y=[%d %d]", x_start, x_end, y_start, y_end);
+        ESP_LOGD(TAG, "lcd_draw_start() jpeg x1=%d y1=%d x2=%d y2=%d", x_start, y_start, x_end,
+                 y_end);
         lcd_draw_start(u->lcd, x_start, y_start, x_end, y_end, u->px_buf);
         lcd_draw_wait_finished(u->lcd);
     }

@@ -18,7 +18,7 @@ static void lcd_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_
     int y1 = area->y1;
     int y2 = area->y2;
 
-    ESP_LOGD(TAG, "lcd_flush_cb() x1=%d y1=%d x2=%d y2=%d", x1, y1, x2, y2);
+    ESP_LOGD(TAG, "lcd_draw_start() lvgl x1=%d y1=%d x2=%d y2=%d", x1, y1, x2, y2);
     lcd_draw_start(lcd, x1, y1, x2, y2, px_map);
 }
 
