@@ -20,7 +20,7 @@ cp sdkconfig.defaults.ci sdkconfig.defaults
 idf.py menuconfig
 idf.py save-defconfig
 
-# Build/flash
+# Build/flash (see below for Pinout info)
 idf.py build flash
 
 # Lint/format
@@ -60,3 +60,26 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 - Both LVGL and the JPEG decoder use this same buffer, rendering one stripe at a time, which is then sent to the display.
 - When frames are arriving, LVGL is deactivated by not calling `lv_timer_handler()`.
 - We are not using the esp_jpeg component (or ROM decoder) because its API does not allow to receive decoded data block by block.
+
+## Hardware
+
+Picture: https://github.com/GeekMagicClock/smalltv-pro/blob/main/images/img-smalltv-pro.jpg
+
+ESP is `ESP32-WROOM-32E 8M Byte`
+
+    ESP32-D0WD-V3 chip
+    Xtensa® dual-core 32-bit LX6 CPU
+    448 KB of ROM
+    520 KB of SRAM
+    16 KB of RTCSRAM
+    8 MB of Flash memory (SPI)
+
+PINs on header (verified with multimeter, WROOM module pin number in parens):
+    1 GND square
+    2 TX (35)
+    3 RX (34)
+    4 3V3
+    5 GPIO0 (25) - must be held low on reset
+    6 RST (3)
+
+To let programmer automatically reset the board: Connect pad 1 (GND) to pad 5 (GPIO0).
