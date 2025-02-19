@@ -6,7 +6,8 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "../managed_components/lvgl__lvgl/src/libs/tjpgd/tjpgd.h"  // Hacky hack - we use lvgl's vendored tjpgd directly.
+// Hacky hack - we use lvgl's vendored tjpgd, instead of vendoring it ourself.
+#include "../managed_components/lvgl__lvgl/src/libs/tjpgd/tjpgd.h"
 #include "lcd.h"
 
 // This is the decoding block size of tjpgd.
@@ -84,7 +85,9 @@ static int jdec_out_func(JDEC *jd, void *bitmap, JRECT *rect) {
         lcd_draw_start(u->lcd, x_start, y_start, x_end, y_end, u->px_buf);
         lcd_draw_wait_finished(u->lcd);
 
-        // TODO: hack to make tearing go away.
+        // Without this hacky sleep statement, there unfortunately is tearing visible on the left
+        // side of the screen. But only if LVGL is initialized. De-initializing in when unused
+        // does not help. Go figure.
         vTaskDelay(pdMS_TO_TICKS(2));
     }
 

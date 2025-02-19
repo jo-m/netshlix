@@ -90,7 +90,7 @@ static void sock_shutdown(rtp_udp_t *u) {
     assert(u != NULL);
 
     assert(u->sock != -1);
-    ESP_LOGE(TAG, "Shutting down socket");
+    ESP_LOGI(TAG, "Shutting down socket");
     shutdown(u->sock, 0);
     close(u->sock);
     u->sock = -1;
@@ -123,7 +123,7 @@ static void jpeg_frame_cb(const rtp_jpeg_frame_t *frame, void *userdata) {
     assert(u != NULL);
 
     const int success = xQueueOverwrite(u->out, frame->jpeg_data);
-    ESP_LOGI(TAG, "Frame %dx%d ts=%" PRIu32 " posted to queue success=%d", frame->width,
+    ESP_LOGD(TAG, "Frame %dx%d ts=%" PRIu32 " posted to queue success=%d", frame->width,
              frame->height, frame->timestamp, success);
 }
 

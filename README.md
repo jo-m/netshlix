@@ -1,12 +1,10 @@
 # Netshlix
 
-**Work in Progress**
-
 ![Demo](demo.gif)
 
 Displays an RTP/JPEG stream on a [Smalltv-pro](https://github.com/GeekMagicClock/smalltv-pro) (240x240 px LCD).
 
-The roll-your-own minimal [RTP/JPEG stack](components/rtpjpeg) incl. jitterbuffer also runs on Linux and is fully tested and fuzzed.
+The roll-your-own minimal [RTP/JPEG stack](components/rtpjpeg) also works on Linux and is fully tested and fuzzed.
 
 ## Build and deploy
 
@@ -39,7 +37,7 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
     ! rtpjpegpay seqnum-offset=63000 mtu=1400 \
     ! udpsink host=10.0.0.134 port=1234
 
-# With rate limiting:
+# With fps capped:
 gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! decodebin \
     ! videorate ! "video/x-raw,framerate=10/1" ! videoconvert ! videoscale ! video/x-raw,width=240,height=240 \
     ! jpegenc \
@@ -53,14 +51,17 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 - Sizes: `ptrdiff_t`
 - Objects: `typedef struct X_t {} X_t`, `init_X(..., X_t *out)`, `X_do(X_t *x, ...)`, `X_destroy(X_t *x)`
 
-## Ideas, TODOs
+## Notes
 
-- [ ] WiFi setup, SoftAP
-- [ ] Touch sensor
-- [x] RTP/MJPEG
-- [ ] https://github.com/jo-m/smalltv-pro-esp-idf/commit/23212276520ee479daa317cb9b5c4690f3b7e0db
-- [ ] Grep TODO
-- [ ] MAYBE reduce CONFIG_ESP_MAIN_TASK_STACK_SIZE to 3072
-- [ ] Increase frame and jitter buffers again
+- There is no WiFi provisioning - the credentials are configured via KConfig (`SMALLTV_WIFI_SSID`, `SMALLTV_WIFI_PASSWORD`) and compiled in.
+- After a timeout without frames arriving (FRAME_TIMEOUT_US), a test image will be shown on the screen.
+- Next to the two jitterbuffer and the JPEG data buffer to decode from, we do not have enough RAM to keep a display framebuffer.
+- Thus, there is a single pixel buffer which can hold only a fraction of the screen pixels.
+- Both LVGL and the JPEG decoder use this same buffer, rendering one stripe at a time, which is then sent to the display.
+- When frames are arriving, LVGL is deactivated by not calling `lv_timer_handler()`.
+- We are not using the esp_jpeg component (or ROM decoder) because its API does not allow to receive decoded data block by block.
+
+## TODOs
+
 - [ ] Show IP address WiFi status
 - [ ] Honor RTP timestamps

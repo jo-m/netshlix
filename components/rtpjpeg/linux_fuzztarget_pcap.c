@@ -40,26 +40,26 @@ struct udp_packet_t unwrap_udp_packet(const uint8_t *packet) {
     unsigned int ip_header_length;
     struct udp_packet_t result = {0};
 
-    // Skip the Ethernet header
+    // Skip the Ethernet header.
     ip_header = (struct ip *)(packet + 14);
     ip_header_length = ip_header->ip_hl * 4;
 
-    // Check if it's a UDP packet
+    // Check if it's a UDP packet.
     if (ip_header->ip_p != IPPROTO_UDP) {
         result.payload = NULL;
         return result;  // Not a UDP packet
     }
 
-    // Skip the IP header
+    // Skip the IP header.
     udp_header = (struct udphdr *)(packet + 14 + ip_header_length);
 
-    // Verify the destination port
+    // Verify the destination port.
     if (ntohs(udp_header->uh_dport) != PORT) {
         result.payload = NULL;
-        return result;  // Not destined for the specified port
+        return result;  // Not destined for the specified port.
     }
 
-    // Extract UDP information
+    // Extract UDP information.
     result.src_port = ntohs(udp_header->uh_sport);
     result.dst_port = ntohs(udp_header->uh_dport);
     result.src_ip = ip_header->ip_src.s_addr;
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // Open the pcap file
+    // Open the pcap file.
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *handle = pcap_open_offline(argv[1], errbuf);
     if (handle == NULL) {
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     rtp_jpeg_session_t sess = {0};
     rtp_jitbuf_t jitbuf = {0};
 
-    // Loop through packets and process
+    // Loop through packets and process.
     struct pcap_pkthdr pcapheader;
     const uint8_t *pcapbuf;
     while ((pcapbuf = pcap_next(handle, &pcapheader)) != NULL) {
@@ -131,7 +131,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    // Close the pcap file
     pcap_close(handle);
 
     return 0;

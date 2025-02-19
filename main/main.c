@@ -124,7 +124,7 @@ void app_main(void) {
         }
 
         // Display frame and update `last_frame_recv_us`.
-        ESP_LOGI(TAG, "Received frame, decode");
+        ESP_LOGD(TAG, "Received frame, decode");
         last_frame_recv_us = esp_timer_get_time();
         reset_screen = true;
         const esp_err_t err =

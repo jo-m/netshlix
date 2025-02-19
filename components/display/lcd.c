@@ -56,7 +56,7 @@ static bool io_done_cb(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_io_even
         ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
     }
 
-    return true;  // TODO: not sure about this.
+    return true;
 }
 
 void init_lcd(lcd_t *lcd_out, const ptrdiff_t px_buf_sz) {
