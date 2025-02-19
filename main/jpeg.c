@@ -111,14 +111,14 @@ esp_err_t init_jpeg_decoder(lcd_t *lcd, uint8_t *px_buf, ptrdiff_t px_buf_sz, jp
 
     out->jdec = malloc(sizeof(*(out->jdec)));
     if (out->jdec == NULL) {
-        ESP_LOGW(TAG, "failed alloc of js sz=%u", sizeof(*(out->jdec)));
+        ESP_LOGW(TAG, "Failed alloc of js sz=%u", sizeof(*(out->jdec)));
         free(out->px_buf);
         return ESP_ERR_NO_MEM;
     }
 
     out->work = malloc(TJPGD_WORK_SZ);
     if (out->work == NULL) {
-        ESP_LOGW(TAG, "failed alloc of work arena sz=%d", TJPGD_WORK_SZ);
+        ESP_LOGW(TAG, "Failed alloc of work arena sz=%d", TJPGD_WORK_SZ);
         free(out->px_buf);
         free(out->jdec);
         return ESP_ERR_NO_MEM;

@@ -60,8 +60,3 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 - Both LVGL and the JPEG decoder use this same buffer, rendering one stripe at a time, which is then sent to the display.
 - When frames are arriving, LVGL is deactivated by not calling `lv_timer_handler()`.
 - We are not using the esp_jpeg component (or ROM decoder) because its API does not allow to receive decoded data block by block.
-
-## TODOs
-
-- [ ] Show IP address WiFi status
-- [ ] Honor RTP timestamps

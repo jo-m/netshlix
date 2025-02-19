@@ -73,7 +73,11 @@ void app_main(void) {
 
     print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize WIFI");
-    init_wifi();
+    init_wifi_sta();
+    esp_netif_ip_info_t ip_info = {0};
+    ESP_ERROR_CHECK(get_ip_info(&ip_info));
+    smpte_image_set_text("Initializing...");
+    lv_timer_handler();
 
     print_free_heap_stack();
     ESP_LOGI(TAG, "Initialize mDNS");
@@ -101,7 +105,10 @@ void app_main(void) {
 
     // Main loop.
     print_free_heap_stack();
-    smpte_image_set_text("No stream available       ");
+    char no_stream_text[70] = {0};
+    snprintf(no_stream_text, sizeof(no_stream_text),
+             "No stream available, send RTP/JPEG data to " IPSTR "       ", IP2STR(&ip_info.ip));
+    smpte_image_set_text(no_stream_text);
     int64_t last_frame_recv_us = 0;
     bool reset_screen = false;
     while (1) {
