@@ -107,7 +107,8 @@ void app_main(void) {
     print_free_heap_stack();
     char no_stream_text[70] = {0};
     snprintf(no_stream_text, sizeof(no_stream_text),
-             "No stream available, send RTP/JPEG data to " IPSTR "       ", IP2STR(&ip_info.ip));
+             "No stream available, send RTP/JPEG data to " IPSTR ":%d    ", IP2STR(&ip_info.ip),
+             CONFIG_SMALLTV_RTP_PORT);
     smpte_image_set_text(no_stream_text);
     int64_t last_frame_recv_us = 0;
     bool reset_screen = false;
