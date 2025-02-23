@@ -54,7 +54,7 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 ## Notes
 
 - There is no WiFi provisioning - the credentials are configured via KConfig (`SMALLTV_WIFI_SSID`, `SMALLTV_WIFI_PASSWORD`) and compiled in.
-- After a timeout without frames arriving (FRAME_TIMEOUT_US), a test image will be shown on the screen.
+- After a timeout without frames arriving (`FRAME_TIMEOUT_US`), a test image will be shown on the screen.
 - Next to the two jitterbuffer and the JPEG data buffer to decode from, we do not have enough RAM to keep a display framebuffer.
 - Thus, there is a single pixel buffer which can hold only a fraction of the screen pixels.
 - Both LVGL and the JPEG decoder use this same buffer, rendering one stripe at a time, which is then sent to the display.
@@ -65,21 +65,20 @@ gst-launch-1.0 filesrc location=components/rtpjpeg/BigBuckBunny_320x180.mp4 ! de
 
 Picture: https://github.com/GeekMagicClock/smalltv-pro/blob/main/images/img-smalltv-pro.jpg
 
-ESP is `ESP32-WROOM-32E 8M Byte`
-
-    ESP32-D0WD-V3 chip
-    Xtensa® dual-core 32-bit LX6 CPU
-    448 KB of ROM
-    520 KB of SRAM
-    16 KB of RTCSRAM
-    8 MB of Flash memory (SPI)
+- ESP32-D0WD-V3 chip
+- Xtensa® dual-core 32-bit LX6 CPU
+- 448 KB of ROM
+- 520 KB of SRAM
+- 16 KB of RTCSRAM
+- 8 MB of Flash memory (SPI)
 
 PINs on header (verified with multimeter, WROOM module pin number in parens):
-    1 GND square
-    2 TX (35)
-    3 RX (34)
-    4 3V3
-    5 GPIO0 (25) - must be held low on reset
-    6 RST (3)
 
-To let programmer automatically reset the board: Connect pad 1 (GND) to pad 5 (GPIO0).
+- 1 GND square
+- 2 TX (35)
+- 3 RX (34)
+- 4 3V3
+- 5 GPIO0 (25) - must be held low on reset
+- 6 RST (3)
+
+To let the programmer automatically reset the board: Connect pad 1 (GND) to pad 5 (GPIO0).
